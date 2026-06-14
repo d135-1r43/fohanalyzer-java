@@ -1,0 +1,145 @@
+/* FOHanalyzer dark theme — ports the CSS custom properties from App.svelte. */
+.root {
+    -bg: #070a0f;
+    -panel: #0d121b;
+    -panel-2: #10161f;
+    -line: #1c2733;
+    -line-soft: #161e28;
+    -txt: #e7eef6;
+    -txt-dim: #8595a6;
+    -txt-mut: #5b6a7a;
+    -cyan: #22d3ee;
+    -amber: #f5a524;
+    -lime: #a3e635;
+    -fx-font-family: "Saira", "Helvetica Neue", sans-serif;
+    -fx-background-color: -bg;
+}
+
+.mono { -fx-font-family: "IBM Plex Mono", "Menlo", monospace; }
+
+/* ---- header ---- */
+.header {
+    -fx-background-color: linear-gradient(to bottom, #0e141d, #0b1018);
+    -fx-border-color: -line;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 0 18 0 16;
+    -fx-min-height: 66; -fx-pref-height: 66;
+    -fx-alignment: center-left;
+    -fx-spacing: 24;
+}
+.wm-top { -fx-font-size: 20px; -fx-text-fill: -txt; }
+.wm-sub { -fx-font-size: 9px; -fx-text-fill: -txt-mut; }
+.ver-chip {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-font-weight: bold;
+    -fx-text-fill: -lime; -fx-border-color: rgba(163,230,53,0.35); -fx-border-radius: 5;
+    -fx-background-color: rgba(163,230,53,0.08); -fx-background-radius: 5; -fx-padding: 3 7 3 7;
+}
+.readout {
+    -fx-background-color: -panel; -fx-border-color: -line-soft;
+    -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 7 13 7 13; -fx-spacing: 3;
+}
+.ro-lbl { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9px; -fx-text-fill: -txt-mut; }
+.ro-val { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 17px; -fx-font-weight: bold; }
+.st-txt { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #ff8080; }
+.st-mono { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-dim; }
+
+/* ---- rail ---- */
+.rail {
+    -fx-background-color: -panel; -fx-border-color: -line; -fx-border-width: 0 0 0 1;
+    -fx-padding: 14 14 0 14; -fx-min-width: 326; -fx-pref-width: 326; -fx-max-width: 326;
+}
+.section { -fx-padding: 14 0 14 0; -fx-border-color: -line-soft; -fx-border-width: 0 0 1 0; -fx-spacing: 8; }
+.sec-title {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 10px; -fx-font-weight: bold;
+    -fx-text-fill: -txt-mut;
+}
+.hint { -fx-font-size: 11px; -fx-text-fill: -txt-mut; -fx-wrap-text: true; }
+.row-lbl { -fx-font-size: 13px; -fx-text-fill: -txt-dim; }
+.row-val { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 13px; -fx-text-fill: -txt; }
+.ctl-lbl { -fx-font-size: 13px; -fx-text-fill: -txt-dim; }
+
+.scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
+
+/* ---- buttons ---- */
+.mini-btn {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 10px; -fx-text-fill: -txt-dim;
+    -fx-background-color: #131b25; -fx-border-color: -line; -fx-border-radius: 5; -fx-background-radius: 5;
+    -fx-padding: 4 8 4 8; -fx-cursor: hand;
+}
+.mini-btn:hover { -fx-text-fill: -txt; -fx-border-color: -txt-mut; }
+.btn {
+    -fx-font-size: 13px; -fx-font-weight: bold; -fx-background-radius: 9; -fx-border-radius: 9;
+    -fx-padding: 11; -fx-cursor: hand; -fx-max-width: infinity;
+}
+.btn-capture { -fx-background-color: rgba(34,211,238,0.08); -fx-text-fill: -cyan; -fx-border-color: rgba(34,211,238,0.35); }
+.btn-ring { -fx-background-color: rgba(245,87,93,0.10); -fx-text-fill: #ff8a8e; -fx-border-color: rgba(245,87,93,0.4); }
+.btn-clear { -fx-background-color: #131b25; -fx-text-fill: -txt-dim; -fx-border-color: -line; }
+
+/* ---- source card ---- */
+.src-card {
+    -fx-background-color: -panel-2; -fx-border-color: -line-soft;
+    -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 11 12 11 12; -fx-spacing: 11;
+}
+.src-name { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -txt; }
+.src-sub { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9.5px; -fx-text-fill: -txt-mut; }
+.marker-pill {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 10px;
+    -fx-background-color: transparent; -fx-border-color: -line; -fx-text-fill: -txt-mut;
+    -fx-border-radius: 20; -fx-background-radius: 20; -fx-padding: 4 9 4 9; -fx-cursor: hand;
+}
+
+/* ---- channel dropdown ---- */
+.chan-btn {
+    -fx-background-color: #0a0e14; -fx-border-color: -line; -fx-border-radius: 8; -fx-background-radius: 8;
+    -fx-padding: 8 10 8 10; -fx-cursor: hand;
+}
+.chan-tag {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 8.5px; -fx-font-weight: bold;
+    -fx-border-radius: 4; -fx-border-width: 1; -fx-padding: 2 4 2 4;
+}
+.chan-val { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 12px; -fx-text-fill: -txt; }
+.chan-idx-btn {
+    -fx-background-color: transparent; -fx-text-fill: -txt-dim; -fx-font-size: 14px; -fx-cursor: hand;
+}
+.chan-idx-label { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-dim; }
+
+/* ---- segmented ---- */
+.segmented { -fx-background-color: #0a0e14; -fx-border-color: -line; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 3; }
+.seg-btn {
+    -fx-background-color: transparent; -fx-text-fill: -txt-dim; -fx-font-size: 12px;
+    -fx-background-radius: 6; -fx-padding: 6 0 6 0; -fx-cursor: hand; -fx-max-width: infinity;
+}
+.seg-btn.on { -fx-background-color: #1d2a36; -fx-text-fill: -txt; -fx-font-weight: bold; }
+
+/* ---- spl ---- */
+.spl-display {
+    -fx-background-color: -panel-2; -fx-border-color: rgba(163,230,53,0.15);
+    -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 11 14 11 14;
+}
+.spl-val { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 30px; -fx-font-weight: bold; -fx-text-fill: -lime; }
+.spl-unit { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-mut; }
+.spl-badge {
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9px; -fx-font-weight: bold;
+    -fx-background-color: rgba(255,255,255,0.05); -fx-text-fill: -txt-mut;
+    -fx-border-color: -line; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 3 7 3 7;
+}
+.spl-input {
+    -fx-background-color: #131b25; -fx-border-color: -line; -fx-border-radius: 7; -fx-background-radius: 7;
+    -fx-text-fill: -txt; -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 13px;
+}
+
+/* ---- feedback log ---- */
+.fb-row {
+    -fx-background-color: -panel-2; -fx-border-color: -line-soft;
+    -fx-border-radius: 7; -fx-background-radius: 7; -fx-padding: 8 9 8 9; -fx-cursor: hand;
+}
+.fb-row.on { -fx-background-color: rgba(255,91,96,0.10); -fx-border-color: rgba(255,91,96,0.5); }
+.fb-freq { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #ffb3b6; }
+.fb-note { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9.5px; -fx-text-fill: -txt-mut; }
+.fb-eq { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-dim; }
+
+.rail-foot { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9.5px; -fx-text-fill: #3a4654; }
+
+/* slider */
+.slider .track { -fx-background-color: linear-gradient(to right, #1d2a36, #2b3d4d); -fx-pref-height: 5; }
+.slider .thumb { -fx-background-color: -cyan; -fx-pref-width: 15; -fx-pref-height: 15; }
