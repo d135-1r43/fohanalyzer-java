@@ -75,15 +75,43 @@ public final class AudioSource {
         return channelCount;
     }
 
-    /** Try 48 kHz / 16-bit at the highest channel count the line supports, with fallbacks. */
+    /**
+     * Open 16-bit PCM at the device's full channel count (so every input of a
+     * multi-channel interface like a Scarlett 18i20 or Behringer Wing is reachable),
+     * preferring 48 kHz then 44.1 kHz. Channel counts are read from the line's own
+     * supported formats rather than guessed, then tried largest-first.
+     */
     private AudioFormat chooseFormat(Mixer mixer) {
-        int[] channelTries = {32, 16, 8, 4, 2, 1};
-        for (int ch : channelTries) {
-            AudioFormat f = new AudioFormat(TARGET_RATE, 16, ch, true, false);
-            if (mixer.isLineSupported(new DataLine.Info(TargetDataLine.class, f))) return f;
+        int maxCh = maxSupportedChannels(mixer);
+        // Distinct channel counts to try, largest first: full count, then stereo, then mono.
+        java.util.List<Integer> tries = new java.util.ArrayList<>();
+        if (maxCh >= 1) tries.add(maxCh);
+        if (maxCh > 2 && !tries.contains(2)) tries.add(2);
+        if (!tries.contains(1)) tries.add(1);
+        for (float rate : new float[]{TARGET_RATE, 44100f}) {
+            for (int ch : tries) {
+                AudioFormat f = new AudioFormat(rate, 16, ch, true, false);
+                if (mixer.isLineSupported(new DataLine.Info(TargetDataLine.class, f))) return f;
+            }
         }
-        // Last resort: stereo, let the system negotiate.
-        return new AudioFormat(TARGET_RATE, 16, 2, true, false);
+        // Last resort: full count at the target rate, let the system negotiate.
+        return new AudioFormat(TARGET_RATE, 16, Math.max(1, maxCh), true, false);
+    }
+
+    /** Largest channel count advertised by any of the mixer's capture lines (default 2). */
+    private static int maxSupportedChannels(Mixer mixer) {
+        int max = 0;
+        for (javax.sound.sampled.Line.Info li : mixer.getTargetLineInfo()) {
+            if (li instanceof DataLine.Info dli
+                && TargetDataLine.class.isAssignableFrom(dli.getLineClass())) {
+                for (AudioFormat f : dli.getFormats()) {
+                    if (f.getChannels() != javax.sound.sampled.AudioSystem.NOT_SPECIFIED) {
+                        max = Math.max(max, f.getChannels());
+                    }
+                }
+            }
+        }
+        return max > 0 ? max : 2;
     }
 
     public synchronized void setChannel(int channelIndex) {
