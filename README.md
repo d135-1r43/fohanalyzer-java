@@ -60,6 +60,23 @@ Only the `core` module is used. The `jvm` module's `AudioDispatcher` is delibera
 used for capture: it consumes a mono stream, which would give up the per-channel selection
 this app needs on multi-channel interfaces (Scarlett 18i20, Behringer Wing, …).
 
+### Saved settings
+
+SPL calibration, the selected inputs and channels, and the analysis/view options persist
+between launches via `java.util.prefs.Preferences` — no config file of our own, no
+dependency. Calibration is flushed to disk the moment it changes, since it is the expensive
+thing to redo; the rest ride the periodic sync plus a flush on window close.
+
+Stored values are validated on the way in: a resolution or averaging setting the segmented
+controls cannot display, or a smoothing value outside the slider's range, falls back to the
+default rather than putting the UI in an unrepresentable state.
+
+A saved `live:<device>` input is only restored if that interface is actually present —
+moving between rigs is the normal case, so a missing device quietly leaves the simulated
+preset selected instead of pointing at a line that cannot be opened. A channel index saved
+against an 18-in interface is clamped when it reopens on a 2-in one. *Reset saved settings*
+at the foot of the rail clears everything back to defaults.
+
 ### Ring-out assist
 
 With a **live** measurement mic, *Detect ring from mic* runs TarsosDSP's `FastYin` over

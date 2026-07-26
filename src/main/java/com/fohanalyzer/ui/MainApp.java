@@ -29,6 +29,7 @@ public class MainApp extends Application {
 
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
     private final AppState state = new AppState();
+    private final Settings settings = new Settings();
 
     private Label peakVal, micVal, soloVal, splVal, clockLabel;
     private HBox splChip;
@@ -43,7 +44,7 @@ public class MainApp extends Application {
         root.getStyleClass().add("root");
         root.setTop(buildHeader());
         root.setCenter(analyzer);
-        root.setRight(new ControlRail(state));
+        root.setRight(new ControlRail(state, settings));
 
         Scene scene = new Scene(root, 1366, 820, Color.web("#070a0f"));
         scene.getStylesheets().add(getClass().getResource("/com/fohanalyzer/theme.css").toExternalForm());
@@ -65,8 +66,12 @@ public class MainApp extends Application {
         wireLiveAudio();
         startClock();
         refreshDevices();
+        // After enumeration: a stored live input can only be restored once we know whether
+        // its interface is actually present.
+        settings.bind(state);
 
         stage.setOnCloseRequest(e -> {
+            settings.flush();
             if (state.micSource != null) state.micSource.disconnect();
             if (state.soloSource != null) state.soloSource.disconnect();
         });
@@ -216,8 +221,14 @@ public class MainApp extends Application {
             // Open the line off the FX thread; report the channel count back.
             new Thread(() -> {
                 int count = source.connect(dev.get(), idx);
-                Platform.runLater(() ->
-                    (isMic ? state.micChanCount : state.soloChanCount).set(count));
+                Platform.runLater(() -> {
+                    (isMic ? state.micChanCount : state.soloChanCount).set(count);
+                    // A restored channel index can outrun the device it lands on — e.g. Ch 8
+                    // saved against an 18i20, reopened on a 2-in interface.
+                    if (idx >= count) {
+                        (isMic ? state.micChanIdx : state.soloChanIdx).set(Math.max(0, count - 1));
+                    }
+                });
             }, "audio-connect").start();
         } else {
             AudioSource src = isMic ? state.micSource : state.soloSource;

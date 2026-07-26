@@ -24,12 +24,14 @@ public final class ControlRail extends ScrollPane {
 
     private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
     private final AppState s;
+    private final Settings settings;
     private final Random rng = new Random();
 
     private SourceCard micCard, soloCard;
 
-    public ControlRail(AppState state) {
+    public ControlRail(AppState state, Settings settings) {
         this.s = state;
+        this.settings = settings;
         getStyleClass().add("scroll-pane");
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -92,11 +94,17 @@ public final class ControlRail extends ScrollPane {
         display.getStyleClass().add("spl-display");
         display.setAlignment(Pos.CENTER_LEFT);
 
-        TextField ref = new TextField("94");
+        TextField ref = new TextField(fmtRef(s.calRefSpl.get()));
         ref.getStyleClass().add("spl-input");
         ref.setPrefWidth(68);
         ref.textProperty().addListener((o, a, b) -> {
             try { s.calRefSpl.set(Double.parseDouble(b)); } catch (NumberFormatException ignored) {}
+        });
+        // Keep the field in step when the value arrives from somewhere else — a restored
+        // setting or a reset — without fighting the user's own typing.
+        s.calRefSpl.addListener((o, a, b) -> {
+            String text = fmtRef(b.doubleValue());
+            if (!text.equals(ref.getText().trim())) ref.setText(text);
         });
         Label refLbl = new Label("dB SPL ref");
         refLbl.getStyleClass().add("hint");
@@ -123,6 +131,13 @@ public final class ControlRail extends ScrollPane {
         vis.run();
         updateSplBadge();
         return sec;
+    }
+
+    /** {@code 94.0 -> "94"}, so a restored whole number does not read as a measurement. */
+    private static String fmtRef(double v) {
+        return v == Math.rint(v)
+            ? Long.toString(Math.round(v))
+            : String.format(java.util.Locale.US, "%.1f", v);
     }
 
     private void updateSplBadge() {
@@ -405,11 +420,29 @@ public final class ControlRail extends ScrollPane {
         f.getStyleClass().add("rail-foot");
         s.micChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + s.signalStatus()));
         s.soloChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + s.signalStatus()));
-        VBox box = new VBox(f);
+
+        Button resetAll = miniBtn("Reset saved settings", e -> confirmReset());
+        VBox box = new VBox(10, f, resetAll);
         box.setAlignment(Pos.CENTER);
         VBox.setVgrow(box, Priority.ALWAYS);
         box.setStyle("-fx-padding:16 0 14 0;");
         return box;
+    }
+
+    /**
+     * Confirm before discarding stored settings — SPL calibration is the expensive one, and
+     * an accidental click would mean re-measuring against a reference source.
+     */
+    private void confirmReset() {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+            "Discard saved settings and return to defaults?\n\n"
+                + "This clears the SPL calibration, the selected inputs and the analysis options.",
+            ButtonType.CANCEL, ButtonType.OK);
+        alert.setHeaderText("Reset saved settings");
+        alert.initOwner(getScene() != null ? getScene().getWindow() : null);
+        alert.showAndWait()
+            .filter(b -> b == ButtonType.OK)
+            .ifPresent(b -> settings.reset(s));
     }
 
     private Button miniBtn(String text, javafx.event.EventHandler<javafx.event.ActionEvent> action) {
