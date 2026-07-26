@@ -54,6 +54,26 @@ The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`) port the orig
 Vitest tests and verify parity of the band math, note naming, formatting, simulation,
 averaging/smoothing/peak-hold/voicing, and the spectral (FFT/band/RMS) logic.
 
+## Code style
+
+The style is the Eclipse formatter profile in [`formatter/java.xml`](formatter/java.xml),
+shared with the `nuusroom` project so both use one house style: tabs at width 4, braces on
+their own line, and comments wrapped at 80 columns.
+
+```bash
+mvn formatter:format   # apply it
+```
+
+It is enforced, not suggested: `formatter-maven-plugin`'s `validate` goal runs in the
+`validate` phase, so **any build fails if a source file is not formatted** — including
+`mvn test` and `mvn package`.
+
+One quirk worth knowing when writing comments: the profile sets `join_line_comments=false`,
+so the formatter *splits* an over-long `//` line but never rejoins the remainder. A comment
+wrapped for a wider margin ends up ragged, and an over-long trailing comment turns into a
+deeply indented staircase. Keep `//` lines inside the 80-column budget (counting the tab
+indent), and put a long comment on its own line above the statement rather than trailing it.
+
 ## Architecture
 
 | Package | Responsibility | Ported from |

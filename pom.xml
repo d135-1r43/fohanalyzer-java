@@ -26,6 +26,7 @@
     <javafx.version>21.0.5</javafx.version>
     <junit.version>5.11.3</junit.version>
     <tarsosdsp.version>2.5</tarsosdsp.version>
+    <formatter.plugin.version>2.29.0</formatter.plugin.version>
     <app.mainClass>com.fohanalyzer.Main</app.mainClass>
   </properties>
 
@@ -88,6 +89,27 @@
         <version>0.0.8</version>
         <configuration>
           <mainClass>${app.mainClass}</mainClass>
+        </configuration>
+      </plugin>
+      <!--
+        Code style is the Eclipse profile in formatter/java.xml, applied by
+        `mvn formatter:format`. The validate goal below runs on every build and fails it when
+        a source file is not formatted, so the style is enforced rather than suggested.
+      -->
+      <plugin>
+        <groupId>net.revelc.code.formatter</groupId>
+        <artifactId>formatter-maven-plugin</artifactId>
+        <version>${formatter.plugin.version}</version>
+        <executions>
+          <execution>
+            <phase>validate</phase>
+            <goals>
+              <goal>validate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <configFile>${project.basedir}/formatter/java.xml</configFile>
         </configuration>
       </plugin>
     </plugins>
