@@ -9,7 +9,31 @@ This is a faithful port of the original Svelte/Web-Audio app to **Java 21 + Java
 The frequency math, signal processing, simulation engine, and on-screen rendering all
 match the original 1:1.
 
-## Requirements
+## Install
+
+Grab the `.dmg` and drag FOHanalyzer to Applications — it ships its own Java runtime, so
+**no JDK or Maven is needed** on the machine that runs it.
+
+macOS will ask for microphone permission the first time you select a live input; that is the
+measurement mic and console feeds, and without it the analyser has nothing to read.
+
+> The bundle is ad-hoc signed, not notarised, so Gatekeeper on another Mac will refuse the
+> first launch: right-click the app and choose **Open** to allow it. A Developer ID
+> signature and notarisation would remove that step.
+
+### Building the bundle yourself
+
+```bash
+./scripts/package-mac.sh            # target/dist/FOHanalyzer-<version>.dmg
+./scripts/package-mac.sh app-image  # just the .app — faster when iterating
+```
+
+Needs a JDK with `jpackage` (21+; built on Temurin 25) and Maven. The script collects the
+runtime jars, renders the icon from the in-app logo via
+`com.fohanalyzer.dev.IconRenderer`, and runs `jpackage`. See
+[Packaging notes](#packaging-notes) for why it looks the way it does.
+
+## Requirements (development)
 
 - JDK 21+ (built/tested on Temurin 25)
 - Maven 3.9+
@@ -114,6 +138,34 @@ available upstream if the headings want a lighter weight.
   browser RMS the SPL readout is calibrated against.
 - UI-component unit tests (Toggle/Segmented/Meter) are not ported — those controls are
   trivial and JavaFX UI testing would add disproportionate setup. Core logic is fully tested.
+
+### Packaging notes
+
+The app is deliberately **not** modular. `com.fohanalyzer.Main` is a plain launcher that
+calls `Application.launch` on `MainApp`, which lets JavaFX run from the classpath. That
+sidesteps the usual `jlink` dead end: TarsosDSP is an automatic module, and `jlink` refuses
+to link those, so a modular build would have needed a synthesised `module-info` for a
+third-party jar.
+
+Because the app is non-modular, `jpackage` cannot infer what the runtime needs, so the
+modules are listed explicitly. Two are easy to miss: **`java.desktop`** carries
+`javax.sound.sampled`, without which there is no audio capture at all, and **`java.prefs`**
+backs the saved settings. The resulting image is 7 modules, ~79 MB, giving an 88 MB `.app`
+that compresses to a ~37 MB `.dmg`.
+
+Two macOS specifics the script handles:
+
+- **Microphone usage description.** macOS 10.14+ denies mic access unless `Info.plist` says
+  why the app wants it. `jpackage` on JDK 25 writes a generic sentence and offers no flag for
+  arbitrary keys, so the script rewrites the key with the real reason — that text is the
+  prompt the user has to agree to.
+- **Re-signing.** Editing `Info.plist` invalidates the ad-hoc signature `jpackage` applies,
+  and arm64 macOS will not launch an unsigned bundle, so the script re-signs ad-hoc
+  afterwards.
+
+The icon is rendered from the same `Logo` vector used in the header, at every size
+`iconutil` wants, rather than downscaled from one bitmap — the bars are thin and resampling
+turns the 16px variant to mush.
 
 ### Dev aids
 
