@@ -10,6 +10,15 @@
   <packaging>jar</packaging>
   <name>FOHanalyzer</name>
   <description>Real-time dual-channel RTA for Front of House engineers (JavaFX port)</description>
+  <url>https://github.com/d135-1r43/fohanalyzer-java</url>
+
+  <licenses>
+    <license>
+      <name>GNU General Public License v3.0 or later</name>
+      <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
 
   <properties>
     <maven.compiler.release>21</maven.compiler.release>

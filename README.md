@@ -1,6 +1,6 @@
 # FOHanalyzer (Java / JavaFX)
 
-A native desktop reimplementation of [FOHanalyzer](../fohanalyzer) — a real-time
+A native desktop reimplementation of FOHanalyzer — a real-time
 dual-channel RTA (Real-Time Analyzer) for Front-of-House sound engineers. It overlays
 a **measurement-mic** trace (cyan) against a console **solo-bus** trace (amber) so you
 can compare room response to source signal, hunt feedback, verify EQ, and meter SPL.
@@ -102,3 +102,15 @@ available upstream if the headings want a lighter weight.
 
 `PROBE=true mvn javafx:run` boots the app, snapshots the window to
 `target/probe-full.png` after ~2 s, and exits — handy for headless visual checks.
+
+## Licence
+
+**GPL-3.0-or-later** — see [LICENSE](LICENSE). The choice is dictated by
+[TarsosDSP](https://github.com/JorenSix/TarsosDSP), which is GPL-3.0: linking against it
+means anything distributed here has to be GPL-compatible too.
+
+The bundled fonts are **not** covered by that licence and keep their own:
+IBM Plex Mono (© IBM Corp.) and Barlow (© The Barlow Project Authors) are both
+[SIL Open Font License 1.1](https://openfontlicense.org), with the licence texts included
+in `src/main/resources/com/fohanalyzer/fonts`. The OFL permits bundling them with an
+application regardless of that application's own licence.
