@@ -73,4 +73,24 @@ class AudioDspTest {
         // A sine of amplitude 1 has RMS 1/sqrt(2) ≈ -3.01 dBFS.
         assertEquals(-3.01, AudioDsp.rmsDb(sine(1000, 1.0)), 0.2);
     }
+
+    @Test
+    void pitchDetectionFindsTheToneFrequency() {
+        for (double freq : new double[]{220, 440, 1000, 2500}) {
+            AudioDsp.Pitch p = AudioDsp.detectPitch(sine(freq, 0.5), RATE);
+            assertNotNull(p, freq + " Hz tone should be pitched");
+            assertEquals(freq, p.hz(), freq * 0.02, "detected pitch within 2% of " + freq);
+            assertTrue(p.probability() > 0, "a detected pitch carries a confidence");
+        }
+    }
+
+    @Test
+    void pitchDetectionRejectsSilence() {
+        assertNull(AudioDsp.detectPitch(new float[N], RATE));
+    }
+
+    @Test
+    void pitchDetectionRejectsTooShortAWindow() {
+        assertNull(AudioDsp.detectPitch(new float[AudioDsp.PITCH_BUFFER - 1], RATE));
+    }
 }

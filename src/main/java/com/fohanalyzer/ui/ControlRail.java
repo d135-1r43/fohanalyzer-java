@@ -1,5 +1,7 @@
 package com.fohanalyzer.ui;
 
+import com.fohanalyzer.audio.AudioDsp;
+import com.fohanalyzer.audio.AudioSource;
 import com.fohanalyzer.dsp.Stats;
 import com.fohanalyzer.engine.Engine;
 import com.fohanalyzer.engine.Ring;
@@ -242,9 +244,14 @@ public final class ControlRail extends ScrollPane {
     private void doCapture() { s.captureNonce.set(s.captureNonce.get() + 1); }
 
     // ---- Ring-out assist --------------------------------------------------
+    private Label detectHint;
+
     private VBox ringoutSection() {
         Label copy = new Label("Simulate a monitor feedback ring to practise hunting the offending band.");
         copy.getStyleClass().add("hint");
+        detectHint = new Label();
+        detectHint.getStyleClass().add("hint");
+        detectHint.setWrapText(true);
         VBox controls = new VBox(10);
         VBox log = new VBox(6);
         VBox sec = section("Ring-out assist", copy, controls, log);
@@ -267,7 +274,18 @@ public final class ControlRail extends ScrollPane {
                 inject.setOnAction(e -> injectRing());
                 controls.getChildren().add(inject);
             }
+            // Real detection only makes sense against a live mic, not the simulation.
+            if (s.isMicLive()) {
+                Button detect = new Button("⌖  Detect ring from mic");
+                detect.getStyleClass().addAll("btn", "btn-detect");
+                detect.setMaxWidth(Double.MAX_VALUE);
+                detect.setOnAction(e -> detectRing());
+                controls.getChildren().addAll(detect, detectHint);
+            } else {
+                detectHint.setText("");
+            }
         };
+        s.micChan.addListener((o, a, b) -> rebuildControls.run());
 
         Runnable rebuildLog = () -> {
             log.getChildren().clear();
@@ -320,17 +338,44 @@ public final class ControlRail extends ScrollPane {
         if (s.ring.get().active()) { s.ring.set(Ring.INACTIVE); return; }
         double fc = 1600 + rng.nextDouble() * 2600;
         s.ring.set(new Ring(true, fc, System.nanoTime() / 1e9));
+        logFeedback(fc, 4 + (int) Math.round(rng.nextDouble() * 3));
+    }
+
+    /**
+     * Ask TarsosDSP's YIN what the live mic is ringing at and log that, instead of the
+     * band centre the peak markers would round to.
+     */
+    private void detectRing() {
+        AudioSource mic = s.micSource;
+        AudioDsp.Pitch p = mic != null ? mic.readPitch() : null;
+        if (p == null) {
+            detectHint.setText("No steady tone on the mic right now.");
+            return;
+        }
+        detectHint.setText(String.format(java.util.Locale.US,
+            "YIN · %s · %.0f%% confidence", Engine.fmtFreq(p.hz()), p.probability() * 100));
+        logFeedback(p.hz(), suggestedCut());
+    }
+
+    /** Log a ring at {@code fc}, notched on the nearest ISO 1/3-octave GEQ band. */
+    private void logFeedback(double fc, int cut) {
         double[] iso = Engine.bandCenters(3);
         double band = iso[0];
         for (double b : iso) {
             if (Math.abs(log2(b / fc)) < Math.abs(log2(band / fc))) band = b;
         }
-        int cut = 4 + (int) Math.round(rng.nextDouble() * 3);
         FeedbackEntry entry = new FeedbackEntry(System.nanoTime(), fc, Engine.noteName(fc), band, cut,
             LocalTime.now().format(HHMM));
         s.feedbackLog.add(0, entry);
         while (s.feedbackLog.size() > 6) s.feedbackLog.remove(s.feedbackLog.size() - 1);
         s.locateFreq.set(fc);
+    }
+
+    /** How far the loudest band stands above the mic average, clamped to a sane cut. */
+    private int suggestedCut() {
+        Stats st = s.stats.get();
+        double prominence = st != null ? st.micPeak() - st.micAvg() : 6;
+        return (int) Math.round(Math.max(3, Math.min(12, prominence)));
     }
 
     private void removeFb(FeedbackEntry en) {

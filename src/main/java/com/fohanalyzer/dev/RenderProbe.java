@@ -26,6 +26,7 @@ import java.io.File;
 public class RenderProbe extends Application {
     @Override
     public void start(Stage stage) {
+        com.fohanalyzer.ui.Fonts.install();
         AppState state = new AppState();
         state.peakHold.set(true);
         state.showTransfer.set(true);

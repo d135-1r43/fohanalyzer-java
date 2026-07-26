@@ -11,7 +11,9 @@
     -cyan: #22d3ee;
     -amber: #f5a524;
     -lime: #a3e635;
-    -fx-font-family: "Saira", "Helvetica Neue", sans-serif;
+    /* Bundled by Fonts.install(); Saira is the web original's choice, kept as a fallback
+       for anyone who has it installed. */
+    -fx-font-family: "Barlow", "Saira", "Helvetica Neue", sans-serif;
     -fx-background-color: -bg;
 }
 
@@ -22,8 +24,9 @@
     -fx-background-color: linear-gradient(to bottom, #0e141d, #0b1018);
     -fx-border-color: -line;
     -fx-border-width: 0 0 1 0;
-    -fx-padding: 0 18 0 16;
-    -fx-min-height: 66; -fx-pref-height: 66;
+    /* 18px side gutter, shared with .rail and the analyzer's margin. */
+    -fx-padding: 0 18 0 18;
+    -fx-min-height: 74; -fx-pref-height: 74;
     -fx-alignment: center-left;
     -fx-spacing: 24;
 }
@@ -46,7 +49,10 @@
 /* ---- rail ---- */
 .rail {
     -fx-background-color: -panel; -fx-border-color: -line; -fx-border-width: 0 0 0 1;
-    -fx-padding: 14 14 0 14; -fx-min-width: 326; -fx-pref-width: 326; -fx-max-width: 326;
+    /* Right gutter is wider than the left: the vertical scrollbar overlays the content,
+       so 18px there would leave row values touching it. Width grows to match, keeping the
+       298px content column the controls were laid out for. */
+    -fx-padding: 16 24 0 18; -fx-min-width: 340; -fx-pref-width: 340; -fx-max-width: 340;
 }
 .section { -fx-padding: 14 0 14 0; -fx-border-color: -line-soft; -fx-border-width: 0 0 1 0; -fx-spacing: 8; }
 .sec-title {
@@ -74,6 +80,7 @@
 .btn-capture { -fx-background-color: rgba(34,211,238,0.08); -fx-text-fill: -cyan; -fx-border-color: rgba(34,211,238,0.35); }
 .btn-ring { -fx-background-color: rgba(245,87,93,0.10); -fx-text-fill: #ff8a8e; -fx-border-color: rgba(245,87,93,0.4); }
 .btn-clear { -fx-background-color: #131b25; -fx-text-fill: -txt-dim; -fx-border-color: -line; }
+.btn-detect { -fx-background-color: rgba(163,230,53,0.08); -fx-text-fill: -lime; -fx-border-color: rgba(163,230,53,0.35); }
 
 /* ---- source card ---- */
 .src-card {

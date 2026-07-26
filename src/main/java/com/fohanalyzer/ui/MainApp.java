@@ -35,8 +35,9 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
+        Fonts.install(); // register the bundled families before any stylesheet resolves them
         AnalyzerView analyzer = new AnalyzerView(state);
-        BorderPane.setMargin(analyzer, new Insets(12));
+        BorderPane.setMargin(analyzer, new Insets(14, 18, 14, 18)); // same 18px gutter as the header/rail
 
         BorderPane root = new BorderPane();
         root.getStyleClass().add("root");
@@ -94,11 +95,19 @@ public class MainApp extends Application {
         top.getStyleClass().add("wm-top");
         Label sub = new Label("DUAL SPECTRUM · RTA");
         sub.getStyleClass().add("wm-sub");
-        VBox wordmark = new VBox(4, top, sub);
         Label ver = new Label("2.3.1");
         ver.getStyleClass().add("ver-chip");
-        HBox brand = new HBox(12, new Logo(), wordmark, ver);
+        // Chip on the title's own line, so it sits at cap height instead of floating
+        // between the two wordmark lines.
+        HBox title = new HBox(10, top, ver);
+        title.setAlignment(Pos.CENTER_LEFT);
+        VBox wordmark = new VBox(3, title, sub);
+        wordmark.setAlignment(Pos.CENTER_LEFT);
+        HBox brand = new HBox(13, new Logo(), wordmark);
         brand.setAlignment(Pos.CENTER_LEFT);
+        // Without this the logo is stretched to the row height and its artwork draws
+        // against the top edge instead of beside the wordmark.
+        brand.setFillHeight(false);
 
         peakVal = new Label("—");
         micVal = new Label("-90");
@@ -132,6 +141,9 @@ public class MainApp extends Application {
         HBox header = new HBox(24, brand, readouts, status);
         header.getStyleClass().add("header");
         header.setAlignment(Pos.CENTER_LEFT);
+        // Each group keeps its natural height so the row's center-left alignment can
+        // actually center it; otherwise they fill the bar and pin their content to the top.
+        header.setFillHeight(false);
         return header;
     }
 

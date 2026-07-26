@@ -16,8 +16,18 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.5</javafx.version>
     <junit.version>5.11.3</junit.version>
+    <tarsosdsp.version>2.5</tarsosdsp.version>
     <app.mainClass>com.fohanalyzer.Main</app.mainClass>
   </properties>
+
+  <!-- TarsosDSP is not on Maven Central; it is published to the author's own repo. -->
+  <repositories>
+    <repository>
+      <id>be.0110.repo-releases</id>
+      <name>0110.be releases</name>
+      <url>https://mvn.0110.be/releases</url>
+    </repository>
+  </repositories>
 
   <dependencies>
     <dependency>
@@ -36,11 +46,11 @@
       <version>${javafx.version}</version>
     </dependency>
 
+    <!-- FFT + window functions + YIN pitch detection (be.tarsos.dsp.util.fft, .pitch) -->
     <dependency>
-      <groupId>com.github.wendykierp</groupId>
-      <artifactId>JTransforms</artifactId>
-      <version>3.1</version>
-      <classifier>with-dependencies</classifier>
+      <groupId>be.tarsos.dsp</groupId>
+      <artifactId>core</artifactId>
+      <version>${tarsosdsp.version}</version>
     </dependency>
 
     <dependency>

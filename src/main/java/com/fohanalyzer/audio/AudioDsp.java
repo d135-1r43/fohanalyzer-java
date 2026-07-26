@@ -1,52 +1,60 @@
 package com.fohanalyzer.audio;
 
-import org.jtransforms.fft.DoubleFFT_1D;
+import be.tarsos.dsp.pitch.FastYin;
+import be.tarsos.dsp.pitch.PitchDetectionResult;
+import be.tarsos.dsp.util.fft.BlackmanWindow;
+import be.tarsos.dsp.util.fft.FFT;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
- * Pure, testable spectral math used by {@link AudioSource}. Mirrors the browser's
- * {@code AnalyserNode.getFloatFrequencyData} (Blackman window, FFT, magnitude
- * normalised by FFT size, converted to dBFS) and the band/RMS readers in
- * {@code src/lib/audioInput.js}.
+ * Pure, testable spectral math used by {@link AudioSource}, built on
+ * <a href="https://github.com/JorenSix/TarsosDSP">TarsosDSP</a>. {@link #spectrumDb}
+ * mirrors the browser's {@code AnalyserNode.getFloatFrequencyData} (Blackman window,
+ * FFT, magnitude normalised by FFT size, converted to dBFS); {@link #bands} and
+ * {@link #rmsDb} port the band/RMS readers in {@code src/lib/audioInput.js}.
  */
 public final class AudioDsp {
 
-    private AudioDsp() {}
+    /** Window length handed to YIN — TarsosDSP's own default for {@link FastYin}. */
+    public static final int PITCH_BUFFER = 2048;
 
-    /** Blackman window (α = 0.16), matching the Web Audio AnalyserNode definition. */
-    public static void applyBlackman(double[] x) {
-        int n = x.length;
-        for (int i = 0; i < n; i++) {
-            double w = 0.42
-                - 0.5 * Math.cos((2 * Math.PI * i) / n)
-                + 0.08 * Math.cos((4 * Math.PI * i) / n);
-            x[i] *= w;
-        }
-    }
+    /** Blocks of {@link #PITCH_BUFFER} samples voted on by {@link #detectPitch}. */
+    private static final int PITCH_BLOCKS = 4;
+
+    /**
+     * Windowed FFTs are stateful (twiddle tables plus a precomputed window curve), so
+     * they are built once per size and kept per thread rather than per call.
+     */
+    private static final ThreadLocal<Map<Integer, FFT>> FFTS =
+        ThreadLocal.withInitial(HashMap::new);
+
+    private AudioDsp() {}
 
     /**
      * Magnitude spectrum in dBFS for the given real time-domain window.
      * Returns {@code fftSize/2} bins (bin k centred at {@code k * sampleRate / fftSize}).
-     * The window is copied and Blackman-windowed before the transform.
+     * The window is copied and Blackman-windowed (α = 0.16, as Web Audio defines it)
+     * before the transform.
      */
     public static double[] spectrumDb(float[] window) {
         int n = window.length;
-        double[] a = new double[n];
-        for (int i = 0; i < n; i++) a[i] = window[i];
-        applyBlackman(a);
+        FFT fft = FFTS.get().computeIfAbsent(n, size -> new FFT(size, new BlackmanWindow()));
 
-        DoubleFFT_1D fft = new DoubleFFT_1D(n);
-        fft.realForward(a);
+        float[] a = window.clone();
+        fft.forwardTransform(a); // applies the Blackman curve, then the real FFT
 
         int bins = n / 2;
         double[] db = new double[bins];
         double inv = 1.0 / n;
-        // JTransforms packed real-FFT layout:
-        //   a[0]=Re[0], a[1]=Re[n/2], a[2k]=Re[k], a[2k+1]=Im[k]
+        // Packed real-FFT layout: a[0]=Re[0], a[1]=Re[n/2], a[2k]=Re[k], a[2k+1]=Im[k].
+        // FFT.modulus() reads that pair layout, so it is only correct from k=1 up —
+        // at k=0 it would fold Nyquist into DC.
         db[0] = magToDb(Math.abs(a[0]) * inv);
         for (int k = 1; k < bins; k++) {
-            double re = a[2 * k];
-            double im = a[2 * k + 1];
-            db[k] = magToDb(Math.sqrt(re * re + im * im) * inv);
+            db[k] = magToDb(fft.modulus(a, k) * inv);
         }
         return db;
     }
@@ -79,11 +87,53 @@ public final class AudioDsp {
         return out;
     }
 
-    /** Broadband RMS of a time-domain window in dBFS (floor -144). Port of {@code readRMS}. */
+    /**
+     * Broadband RMS of a time-domain window in dBFS (floor -144). Port of {@code readRMS}.
+     *
+     * <p>Deliberately not TarsosDSP's {@code SilenceDetector.soundPressureLevel}: that
+     * divides the energy by the buffer length instead of its square root, so it does not
+     * agree with the browser's RMS the SPL readout is calibrated against.
+     */
     public static double rmsDb(float[] window) {
         double sum = 0;
         for (float v : window) sum += (double) v * v;
         double rms = Math.sqrt(sum / window.length);
         return rms > 1e-9 ? 20 * Math.log10(rms) : -144;
+    }
+
+    /** A detected fundamental: frequency in Hz plus YIN's own confidence in it. */
+    public record Pitch(double hz, double probability) {}
+
+    /**
+     * Fundamental of the tail of {@code window} via TarsosDSP's FastYin, or {@code null}
+     * when nothing steady is playing. Up to {@link #PITCH_BLOCKS} consecutive blocks
+     * ending at the newest sample are each estimated separately and the median is
+     * returned, so a single glitched block cannot move the result — which matters when
+     * the answer is fed straight into the feedback log as a frequency to notch.
+     */
+    public static Pitch detectPitch(float[] window, float sampleRate) {
+        if (window == null || window.length < PITCH_BUFFER) return null;
+
+        FastYin yin = new FastYin(sampleRate, PITCH_BUFFER);
+        int blocks = Math.min(PITCH_BLOCKS, window.length / PITCH_BUFFER);
+        double[] hz = new double[blocks];
+        double probSum = 0;
+        int found = 0;
+
+        for (int b = 0; b < blocks; b++) {
+            int off = window.length - (b + 1) * PITCH_BUFFER;
+            float[] block = Arrays.copyOfRange(window, off, off + PITCH_BUFFER);
+            // getPitch() hands back a reused result object — read it before the next call.
+            PitchDetectionResult r = yin.getPitch(block);
+            if (r.isPitched() && r.getPitch() > 0) {
+                hz[found++] = r.getPitch();
+                probSum += r.getProbability();
+            }
+        }
+        if (found == 0) return null;
+
+        double[] sorted = Arrays.copyOf(hz, found);
+        Arrays.sort(sorted);
+        return new Pitch(sorted[found / 2], probSum / found);
     }
 }

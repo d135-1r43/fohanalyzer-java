@@ -200,4 +200,13 @@ public final class AudioSource {
         if (!isConnected()) return null;
         return AudioDsp.rmsDb(snapshotWindow());
     }
+
+    /**
+     * Fundamental of whatever is currently ringing, or {@code null} if not connected or
+     * nothing steady is present. Drives the ring-out assist's "detect from mic" action.
+     */
+    public AudioDsp.Pitch readPitch() {
+        if (!isConnected()) return null;
+        return AudioDsp.detectPitch(snapshotWindow(), sampleRate);
+    }
 }
