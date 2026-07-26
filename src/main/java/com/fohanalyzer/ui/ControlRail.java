@@ -27,7 +27,7 @@ public final class ControlRail extends ScrollPane
 {
 
 	private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
-	private final AppState s;
+	private final AppState state;
 	private final Settings settings;
 	private final Random rng = new Random();
 
@@ -35,7 +35,7 @@ public final class ControlRail extends ScrollPane
 
 	public ControlRail(AppState state, Settings settings)
 	{
-		this.s = state;
+		this.state = state;
 		this.settings = settings;
 		getStyleClass().add("scroll-pane");
 		setFitToWidth(true);
@@ -55,7 +55,7 @@ public final class ControlRail extends ScrollPane
 			railFoot());
 
 		// Push live stats into the meters / SPL readout.
-		s.stats.addListener((o, a, st) -> onStats(st));
+		state.stats.addListener((o, a, st) -> onStats(st));
 
 		setContent(rail);
 	}
@@ -64,11 +64,11 @@ public final class ControlRail extends ScrollPane
 	private VBox sourcesSection()
 	{
 		micCard = new SourceCard("Measurement Mic", "Room · capture", "#22d3ee",
-			s.micOn, s.markerSource, "mic", AppState.MIC_INPUTS,
-			s.micChan, s.micChanIdx, s.micChanCount, s.audioDevices);
+			state.micOn, state.markerSource, "mic", AppState.MIC_INPUTS,
+			state.micChan, state.micChanIdx, state.micChanCount, state.audioDevices);
 		soloCard = new SourceCard("Solo Bus", "Console · PFL/AFL", "#f5a524",
-			s.soloOn, s.markerSource, "solo", AppState.SOLO_INPUTS,
-			s.soloChan, s.soloChanIdx, s.soloChanCount, s.audioDevices);
+			state.soloOn, state.markerSource, "solo", AppState.SOLO_INPUTS,
+			state.soloChan, state.soloChanIdx, state.soloChanCount, state.audioDevices);
 		return section("Sources", micCard, soloCard);
 	}
 
@@ -78,7 +78,7 @@ public final class ControlRail extends ScrollPane
 		soloCard.meter.setValue(st.soloAvg());
 		if (splValue != null)
 		{
-			Double spl = st.micRmsDbfs() != null ? st.micRmsDbfs() + s.splOffset.get() : null;
+			Double spl = st.micRmsDbfs() != null ? st.micRmsDbfs() + state.splOffset.get() : null;
 			splValue.setText(spl != null ? String.format(java.util.Locale.US, "%.1f", spl) : "—");
 		}
 	}
@@ -102,13 +102,13 @@ public final class ControlRail extends ScrollPane
 		display.getStyleClass().add("spl-display");
 		display.setAlignment(Pos.CENTER_LEFT);
 
-		TextField ref = new TextField(fmtRef(s.calRefSpl.get()));
+		TextField ref = new TextField(fmtRef(state.calRefSpl.get()));
 		ref.getStyleClass().add("spl-input");
 		ref.setPrefWidth(68);
 		ref.textProperty().addListener((o, a, b) -> {
 			try
 			{
-				s.calRefSpl.set(Double.parseDouble(b));
+				state.calRefSpl.set(Double.parseDouble(b));
 			}
 			catch (NumberFormatException ignored)
 			{
@@ -117,7 +117,7 @@ public final class ControlRail extends ScrollPane
 		// Keep the field in step when the value arrives from somewhere else —
 		// a restored setting or a reset — without fighting the user's own
 		// typing.
-		s.calRefSpl.addListener((o, a, b) -> {
+		state.calRefSpl.addListener((o, a, b) -> {
 			String text = fmtRef(b.doubleValue());
 			if (!text.equals(ref.getText().trim())) ref.setText(text);
 		});
@@ -137,12 +137,12 @@ public final class ControlRail extends ScrollPane
 
 		// visible only when the mic source is live
 		Runnable vis = () -> {
-			boolean live = s.isMicLive();
+			boolean live = state.isMicLive();
 			sec.setVisible(live);
 			sec.setManaged(live);
 		};
-		s.micChan.addListener((o, a, b) -> vis.run());
-		s.splOffset.addListener((o, a, b) -> updateSplBadge());
+		state.micChan.addListener((o, a, b) -> vis.run());
+		state.splOffset.addListener((o, a, b) -> updateSplBadge());
 		vis.run();
 		updateSplBadge();
 		return sec;
@@ -161,7 +161,7 @@ public final class ControlRail extends ScrollPane
 
 	private void updateSplBadge()
 	{
-		boolean cal = s.splOffset.get() != 0;
+		boolean cal = state.splOffset.get() != 0;
 		splBadge.setText(cal ? "CAL" : "UNCAL");
 		splBadge.getStyleClass().remove("spl-badge-cal");
 		if (cal) splBadge.getStyleClass().add("spl-badge-cal");
@@ -169,8 +169,8 @@ public final class ControlRail extends ScrollPane
 
 	private void calibrate()
 	{
-		Double rms = s.stats.get().micRmsDbfs();
-		if (rms != null) s.splOffset.set(s.calRefSpl.get() - rms);
+		Double rms = state.stats.get().micRmsDbfs();
+		if (rms != null) state.splOffset.set(state.calRefSpl.get() - rms);
 	}
 
 	// ---- Resolution -------------------------------------------------------
@@ -182,7 +182,7 @@ public final class ControlRail extends ScrollPane
 		opts.put(6, "1/6");
 		opts.put(12, "1/12");
 		opts.put(24, "1/24");
-		Segmented seg = new Segmented(s.frac, opts);
+		Segmented seg = new Segmented(state.frac, opts);
 		Label hint = new Label("Octave-band averaging width");
 		hint.getStyleClass().add("hint");
 		return section("Resolution", seg, hint);
@@ -199,10 +199,10 @@ public final class ControlRail extends ScrollPane
 		HBox.setHgrow(spacer, Priority.ALWAYS);
 		HBox row = new HBox(lbl, spacer, val);
 
-		Slider slider = new Slider(0, 0.95, s.smoothing.get());
-		slider.valueProperty().bindBidirectional(s.smoothing);
-		Runnable updateVal = () -> val.setText(Math.round(s.smoothing.get() * 100) + "%");
-		s.smoothing.addListener((o, a, b) -> updateVal.run());
+		Slider slider = new Slider(0, 0.95, state.smoothing.get());
+		slider.valueProperty().bindBidirectional(state.smoothing);
+		Runnable updateVal = () -> val.setText(Math.round(state.smoothing.get() * 100) + "%");
+		state.smoothing.addListener((o, a, b) -> updateVal.run());
 		updateVal.run();
 
 		Label avgLbl = new Label("Averaging");
@@ -213,7 +213,7 @@ public final class ControlRail extends ScrollPane
 		opts.put(4, "4");
 		opts.put(8, "8");
 		opts.put(16, "16");
-		Segmented avg = new Segmented(s.avgN, opts);
+		Segmented avg = new Segmented(state.avgN, opts);
 
 		return section("Response", row, slider, avgLbl, avg);
 	}
@@ -228,21 +228,21 @@ public final class ControlRail extends ScrollPane
 		HBox.setHgrow(s1, Priority.ALWAYS);
 		Button reset = new Button("Reset");
 		reset.getStyleClass().add("mini-btn");
-		reset.setOnAction(e -> s.holdReset.set(s.holdReset.get() + 1));
-		Toggle phToggle = new Toggle(s.peakHold, "#a3e635");
+		reset.setOnAction(e -> state.holdReset.set(state.holdReset.get() + 1));
+		Toggle phToggle = new Toggle(state.peakHold, "#a3e635");
 		HBox phRight = new HBox(9, reset, phToggle);
 		phRight.setAlignment(Pos.CENTER_RIGHT);
 		HBox phRow = new HBox(phLbl, s1, phRight);
 		phRow.setAlignment(Pos.CENTER_LEFT);
 		Runnable phVis = () -> {
-			reset.setVisible(s.peakHold.get());
-			reset.setManaged(s.peakHold.get());
+			reset.setVisible(state.peakHold.get());
+			reset.setManaged(state.peakHold.get());
 		};
-		s.peakHold.addListener((o, a, b) -> phVis.run());
+		state.peakHold.addListener((o, a, b) -> phVis.run());
 		phVis.run();
 
-		HBox markerRow = ctlRow("Peak markers", new Toggle(s.markers, "#a3e635"));
-		HBox tfRow = ctlRow("Transfer fn  (Mic−Solo)", new Toggle(s.showTransfer, "#b794f6"));
+		HBox markerRow = ctlRow("Peak markers", new Toggle(state.markers, "#a3e635"));
+		HBox tfRow = ctlRow("Transfer fn  (Mic−Solo)", new Toggle(state.showTransfer, "#b794f6"));
 
 		return section("Overlays", phRow, markerRow, tfRow);
 	}
@@ -268,7 +268,7 @@ public final class ControlRail extends ScrollPane
 
 		Runnable rebuild = () -> {
 			body.getChildren().clear();
-			Draw.Reference ref = s.reference.get();
+			Draw.Reference ref = state.reference.get();
 			if (ref == null)
 			{
 				Button capture = new Button("⊕  Capture reference");
@@ -281,23 +281,23 @@ public final class ControlRail extends ScrollPane
 			{
 				Label info = new Label("Snapshot " + ref.time());
 				info.getStyleClass().add("row-lbl");
-				Button hideShow = miniBtn(s.showReference.get() ? "Hide" : "Show",
-					e -> s.showReference.set(!s.showReference.get()));
+				Button hideShow = miniBtn(state.showReference.get() ? "Hide" : "Show",
+					e -> state.showReference.set(!state.showReference.get()));
 				Button recap = miniBtn("Re-cap", e -> doCapture());
-				Button clear = miniBtn("Clear", e -> s.reference.set(null));
+				Button clear = miniBtn("Clear", e -> state.reference.set(null));
 				HBox actions = new HBox(7, hideShow, recap, clear);
 				body.getChildren().addAll(info, actions);
 			}
 		};
-		s.reference.addListener((o, a, b) -> rebuild.run());
-		s.showReference.addListener((o, a, b) -> rebuild.run());
+		state.reference.addListener((o, a, b) -> rebuild.run());
+		state.showReference.addListener((o, a, b) -> rebuild.run());
 		rebuild.run();
 		return sec;
 	}
 
 	private void doCapture()
 	{
-		s.captureNonce.set(s.captureNonce.get() + 1);
+		state.captureNonce.set(state.captureNonce.get() + 1);
 	}
 
 	// ---- Ring-out assist --------------------------------------------------
@@ -316,7 +316,7 @@ public final class ControlRail extends ScrollPane
 
 		Runnable rebuildControls = () -> {
 			controls.getChildren().clear();
-			Ring r = s.ring.get();
+			Ring r = state.ring.get();
 			if (r.active())
 			{
 				Label ring = new Label("Ringing @ " + Engine.fmtFreq(r.fc()) + " · " + Engine.noteName(r.fc()));
@@ -337,7 +337,7 @@ public final class ControlRail extends ScrollPane
 			}
 			// Real detection only makes sense against a live mic, not the
 			// simulation.
-			if (s.isMicLive())
+			if (state.isMicLive())
 			{
 				Button detect = new Button("⌖  Detect ring from mic");
 				detect.getStyleClass().addAll("btn", "btn-detect");
@@ -350,29 +350,29 @@ public final class ControlRail extends ScrollPane
 				detectHint.setText("");
 			}
 		};
-		s.micChan.addListener((o, a, b) -> rebuildControls.run());
+		state.micChan.addListener((o, a, b) -> rebuildControls.run());
 
 		Runnable rebuildLog = () -> {
 			log.getChildren().clear();
-			if (s.feedbackLog.isEmpty()) return;
+			if (state.feedbackLog.isEmpty()) return;
 			Label head = new Label("Feedback log");
 			head.getStyleClass().add("sec-title");
 			Button clearAll = miniBtn("Clear all", e -> {
-				s.feedbackLog.clear();
-				s.locateFreq.set(null);
+				state.feedbackLog.clear();
+				state.locateFreq.set(null);
 			});
 			Region sp = new Region();
 			HBox.setHgrow(sp, Priority.ALWAYS);
 			HBox header = new HBox(head, sp, clearAll);
 			header.setAlignment(Pos.CENTER_LEFT);
 			log.getChildren().add(header);
-			for (FeedbackEntry en : s.feedbackLog)
+			for (FeedbackEntry en : state.feedbackLog)
 				log.getChildren().add(fbRow(en));
 		};
 
-		s.ring.addListener((o, a, b) -> rebuildControls.run());
-		s.feedbackLog.addListener((javafx.collections.ListChangeListener<FeedbackEntry>)c -> rebuildLog.run());
-		s.locateFreq.addListener((o, a, b) -> rebuildLog.run());
+		state.ring.addListener((o, a, b) -> rebuildControls.run());
+		state.feedbackLog.addListener((javafx.collections.ListChangeListener<FeedbackEntry>)c -> rebuildLog.run());
+		state.locateFreq.addListener((o, a, b) -> rebuildLog.run());
 		rebuildControls.run();
 		rebuildLog.run();
 		return sec;
@@ -398,7 +398,7 @@ public final class ControlRail extends ScrollPane
 		row.getStyleClass().add("fb-row");
 		row.setAlignment(Pos.CENTER_LEFT);
 		row.setStyle("-fx-border-width:0 0 0 2; -fx-border-color:#ff5b60;");
-		boolean on = s.locateFreq.get() != null && s.locateFreq.get() == en.freq();
+		boolean on = state.locateFreq.get() != null && state.locateFreq.get() == en.freq();
 		if (on) row.getStyleClass().add("on");
 		row.setOnMouseClicked(e -> toggleLocate(en.freq()));
 		return row;
@@ -406,13 +406,13 @@ public final class ControlRail extends ScrollPane
 
 	private void injectRing()
 	{
-		if (s.ring.get().active())
+		if (state.ring.get().active())
 		{
-			s.ring.set(Ring.INACTIVE);
+			state.ring.set(Ring.INACTIVE);
 			return;
 		}
 		double fc = 1600 + rng.nextDouble() * 2600;
-		s.ring.set(new Ring(true, fc, System.nanoTime() / 1e9));
+		state.ring.set(new Ring(true, fc, System.nanoTime() / 1e9));
 		logFeedback(fc, 4 + (int)Math.round(rng.nextDouble() * 3));
 	}
 
@@ -422,7 +422,7 @@ public final class ControlRail extends ScrollPane
 	 */
 	private void detectRing()
 	{
-		AudioSource mic = s.micSource;
+		AudioSource mic = state.micSource;
 		AudioDsp.Pitch p = mic != null ? mic.readPitch() : null;
 		if (p == null)
 		{
@@ -447,10 +447,10 @@ public final class ControlRail extends ScrollPane
 		}
 		FeedbackEntry entry = new FeedbackEntry(System.nanoTime(), fc, Engine.noteName(fc), band, cut,
 			LocalTime.now().format(HHMM));
-		s.feedbackLog.add(0, entry);
-		while (s.feedbackLog.size() > 6)
-			s.feedbackLog.remove(s.feedbackLog.size() - 1);
-		s.locateFreq.set(fc);
+		state.feedbackLog.add(0, entry);
+		while (state.feedbackLog.size() > 6)
+			state.feedbackLog.remove(state.feedbackLog.size() - 1);
+		state.locateFreq.set(fc);
 	}
 
 	/**
@@ -459,21 +459,21 @@ public final class ControlRail extends ScrollPane
 	 */
 	private int suggestedCut()
 	{
-		Stats st = s.stats.get();
+		Stats st = state.stats.get();
 		double prominence = st != null ? st.micPeak() - st.micAvg() : 6;
 		return (int)Math.round(Math.max(3, Math.min(12, prominence)));
 	}
 
 	private void removeFb(FeedbackEntry en)
 	{
-		if (s.locateFreq.get() != null && s.locateFreq.get() == en.freq()) s.locateFreq.set(null);
-		s.feedbackLog.remove(en);
+		if (state.locateFreq.get() != null && state.locateFreq.get() == en.freq()) state.locateFreq.set(null);
+		state.feedbackLog.remove(en);
 	}
 
 	private void toggleLocate(double freq)
 	{
-		Double cur = s.locateFreq.get();
-		s.locateFreq.set(cur != null && cur == freq ? null : freq);
+		Double cur = state.locateFreq.get();
+		state.locateFreq.set(cur != null && cur == freq ? null : freq);
 	}
 
 	private static double log2(double x)
@@ -494,10 +494,10 @@ public final class ControlRail extends ScrollPane
 
 	private VBox railFoot()
 	{
-		Label f = new Label("FOHanalyzer 2.3.1 · " + s.signalStatus());
+		Label f = new Label("FOHanalyzer 2.3.1 · " + state.signalStatus());
 		f.getStyleClass().add("rail-foot");
-		s.micChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + s.signalStatus()));
-		s.soloChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + s.signalStatus()));
+		state.micChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + state.signalStatus()));
+		state.soloChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + state.signalStatus()));
 
 		Button resetAll = miniBtn("Reset saved settings", e -> confirmReset());
 		VBox box = new VBox(10, f, resetAll);
@@ -522,7 +522,7 @@ public final class ControlRail extends ScrollPane
 		alert.initOwner(getScene() != null ? getScene().getWindow() : null);
 		alert.showAndWait()
 			.filter(b -> b == ButtonType.OK)
-			.ifPresent(b -> settings.reset(s));
+			.ifPresent(b -> settings.reset(state));
 	}
 
 	private Button miniBtn(String text, javafx.event.EventHandler<javafx.event.ActionEvent> action)
