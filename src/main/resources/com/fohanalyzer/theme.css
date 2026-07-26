@@ -49,10 +49,10 @@
 /* ---- rail ---- */
 .rail {
     -fx-background-color: -panel; -fx-border-color: -line; -fx-border-width: 0 0 0 1;
-    /* Right gutter is wider than the left: the vertical scrollbar overlays the content,
-       so 18px there would leave row values touching it. Width grows to match, keeping the
-       298px content column the controls were laid out for. */
-    -fx-padding: 16 24 0 18; -fx-min-width: 340; -fx-pref-width: 340; -fx-max-width: 340;
+    /* The scrollbar sits outside the viewport, so its width adds to this padding rather
+       than overlapping it: 10 here plus an 11px bar matches the 18px gutter on the left and
+       everywhere else. Total width keeps the 298px content column the controls expect. */
+    -fx-padding: 16 10 0 18; -fx-min-width: 326; -fx-pref-width: 326; -fx-max-width: 326;
 }
 .section { -fx-padding: 14 0 14 0; -fx-border-color: -line-soft; -fx-border-width: 0 0 1 0; -fx-spacing: 8; }
 .sec-title {
@@ -64,7 +64,53 @@
 .row-val { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 13px; -fx-text-fill: -txt; }
 .ctl-lbl { -fx-font-size: 13px; -fx-text-fill: -txt-dim; }
 
+/* ---- scrollbar ----
+   Modena's default is a light track with arrow buttons at each end, which reads as a
+   foreign widget bolted onto a dark panel. Reduced to a thin rounded thumb on no track:
+   the rail is the only scrollable surface, so position is all the bar needs to convey. */
 .scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
+.scroll-pane > .corner { -fx-background-color: transparent; }
+
+.scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 11;
+    -fx-padding: 2 2 2 0;
+}
+.scroll-bar:vertical > .track,
+.scroll-bar:vertical > .track-background {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.scroll-bar:vertical > .thumb {
+    -fx-background-color: #23303e;
+    -fx-background-radius: 5;
+    -fx-background-insets: 0;
+}
+.scroll-bar:vertical > .thumb:hover { -fx-background-color: #33475b; }
+.scroll-bar:vertical > .thumb:pressed { -fx-background-color: #3f566d; }
+
+/* No arrow buttons: collapse them so the thumb spans the full height. */
+.scroll-bar > .increment-button,
+.scroll-bar > .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+    -fx-pref-height: 0;
+    -fx-pref-width: 0;
+}
+.scroll-bar > .increment-button > .increment-arrow,
+.scroll-bar > .decrement-button > .decrement-arrow {
+    -fx-background-color: transparent;
+    -fx-shape: null;
+    -fx-padding: 0;
+}
+
+/* The rail is fitToWidth with the h-bar policy set to NEVER; keep it out of the layout. */
+.scroll-bar:horizontal {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0;
+    -fx-padding: 0;
+    -fx-opacity: 0;
+}
 
 /* ---- buttons ---- */
 .mini-btn {
