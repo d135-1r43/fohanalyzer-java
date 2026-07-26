@@ -47,6 +47,7 @@ public class MainApp extends Application {
 
         Scene scene = new Scene(root, 1366, 820, Color.web("#070a0f"));
         scene.getStylesheets().add(getClass().getResource("/com/fohanalyzer/theme.css").toExternalForm());
+        com.fohanalyzer.dev.CssWatcher.installIfEnabled(scene); // no-op unless FOH_DEV=true
         stage.setTitle("FOHanalyzer");
         stage.setScene(scene);
         stage.centerOnScreen();
@@ -70,12 +71,22 @@ public class MainApp extends Application {
             if (state.soloSource != null) state.soloSource.disconnect();
         });
 
-        if ("true".equals(System.getenv("PROBE"))) maybeSnapshot(root);
+        String probe = System.getenv("PROBE");
+        if (probe != null && !probe.isBlank()) maybeSnapshot(root, probeDelaySeconds(probe));
     }
 
-    /** Dev aid: with -Dprobe=true, snapshot the whole window to target/probe-full.png and exit. */
-    private void maybeSnapshot(BorderPane root) {
-        var wait = new javafx.animation.PauseTransition(Duration.seconds(2));
+    /** {@code PROBE=true} keeps the default 2 s; {@code PROBE=8} waits 8 s before snapshotting. */
+    private static double probeDelaySeconds(String probe) {
+        try {
+            return Double.parseDouble(probe.trim());
+        } catch (NumberFormatException e) {
+            return 2;
+        }
+    }
+
+    /** Dev aid: with PROBE set, snapshot the whole window to target/probe-full.png and exit. */
+    private void maybeSnapshot(BorderPane root, double delaySeconds) {
+        var wait = new javafx.animation.PauseTransition(Duration.seconds(delaySeconds));
         wait.setOnFinished(e -> {
             try {
                 var img = root.snapshot(new javafx.scene.SnapshotParameters(), null);

@@ -98,10 +98,21 @@ available upstream if the headings want a lighter weight.
 - UI-component unit tests (Toggle/Segmented/Meter) are not ported — those controls are
   trivial and JavaFX UI testing would add disproportionate setup. Core logic is fully tested.
 
-### Dev render probe
+### Dev aids
 
-`PROBE=true mvn javafx:run` boots the app, snapshots the window to
-`target/probe-full.png` after ~2 s, and exits — handy for headless visual checks.
+**CSS hot reload.** `FOH_DEV=true mvn javafx:run` watches
+`src/main/resources/com/fohanalyzer/theme.css` and re-applies it to the running window on
+save, so padding/colour/font work does not need a restart. Off by default — no watcher
+thread exists in a normal run.
+
+It reloads by copying the stylesheet to a fresh temp file and pointing the scene at that.
+JavaFX keys its parsed-stylesheet cache on the URL string, so re-adding the same path — even
+after `clear()` — can hand back the stale parse; a filename it has never seen sidesteps the
+cache instead of relying on undocumented invalidation.
+
+**Render probe.** `PROBE=true mvn javafx:run` boots the app, snapshots the window to
+`target/probe-full.png` after ~2 s, and exits — handy for headless visual checks. Pass a
+number for a longer delay (`PROBE=20`), e.g. to snapshot *after* a hot reload.
 
 ## Licence
 
