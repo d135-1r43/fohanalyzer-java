@@ -40,6 +40,7 @@
     <tarsosdsp.version>2.5</tarsosdsp.version>
     <slf4j.version>2.0.16</slf4j.version>
     <formatter.plugin.version>2.29.0</formatter.plugin.version>
+    <release.plugin.version>3.3.1</release.plugin.version>
     <app.mainClass>com.fohanalyzer.Main</app.mainClass>
   </properties>
 
@@ -138,6 +139,17 @@
         <configuration>
           <mainClass>${app.mainClass}</mainClass>
         </configuration>
+      </plugin>
+      <!--
+        Pinned like every other plugin here: release:prepare is run by hand, and letting
+        Maven resolve whatever is newest that day would make a release depend on when it
+        was cut. The default tag format is artifactId-version, which is one of the two
+        patterns .github/workflows/build.yml triggers a release build on.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>${release.plugin.version}</version>
       </plugin>
       <!--
         Code style is the Eclipse profile in formatter/java.xml, applied by
