@@ -1,0 +1,51 @@
+version: 2
+
+# Grouped so a single PR carries a set of artifacts that have to move together, rather
+# than one PR per artifact leaving the build in a half-upgraded state. The javafx-*
+# modules share one version property, and slf4j-api has to match its binding.
+updates:
+  - package-ecosystem: maven
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: build
+    groups:
+      javafx:
+        # javafx-controls / -graphics / -swing are one release train behind a single
+        # ${javafx.version}; splitting them would produce PRs that cannot merge alone.
+        patterns:
+          - "org.openjfx:*"
+        exclude-patterns:
+          # Ships on its own cadence and is a build plugin, not part of the runtime.
+          - "org.openjfx:javafx-maven-plugin"
+      slf4j:
+        # The API and its binding are versioned together; a mismatch is a runtime
+        # surprise rather than a compile error.
+        patterns:
+          - "org.slf4j:*"
+      testing:
+        patterns:
+          - "org.junit*:*"
+      maven-plugins:
+        # Build tooling. These change nothing about the shipped app, so they are
+        # cheap to review as one batch.
+        patterns:
+          - "org.apache.maven.plugins:*"
+          - "net.revelc.code.formatter:*"
+          - "org.openjfx:javafx-maven-plugin"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        # Only ever a handful of first-party actions in build.yml; one PR is plenty.
+        patterns:
+          - "*"
