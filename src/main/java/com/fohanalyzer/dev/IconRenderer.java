@@ -9,6 +9,8 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -31,6 +33,7 @@ import java.nio.file.Path;
  */
 public class IconRenderer extends Application
 {
+	private static final Logger log = LoggerFactory.getLogger(IconRenderer.class);
 
 	private static final Path OUT = Path.of("target/FOHanalyzer.iconset");
 
@@ -66,7 +69,7 @@ public class IconRenderer extends Application
 			int px = (Integer)v[0];
 			write(px, OUT.resolve((String)v[1]).toFile());
 		}
-		System.out.println("ICONSET_WROTE " + OUT.toAbsolutePath());
+		log.info("iconset written to {}", OUT.toAbsolutePath());
 		Platform.exit();
 	}
 

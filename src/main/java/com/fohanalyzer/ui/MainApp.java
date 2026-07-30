@@ -20,6 +20,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -30,6 +32,7 @@ import java.util.Optional;
  */
 public class MainApp extends Application
 {
+	private static final Logger log = LoggerFactory.getLogger(MainApp.class);
 
 	private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss");
 	private final AppState state = new AppState();
@@ -118,11 +121,11 @@ public class MainApp extends Application
 				javax.imageio.ImageIO.write(
 					javafx.embed.swing.SwingFXUtils.fromFXImage(img, null), "png",
 					new java.io.File("target/probe-full.png"));
-				System.out.println("PROBE_WROTE target/probe-full.png");
+				log.info("probe wrote target/probe-full.png");
 			}
 			catch (Exception ex)
 			{
-				ex.printStackTrace();
+				log.warn("probe snapshot failed", ex);
 			}
 			finally
 			{

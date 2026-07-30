@@ -14,6 +14,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -26,6 +28,8 @@ import java.io.File;
  */
 public class RenderProbe extends Application
 {
+	private static final Logger log = LoggerFactory.getLogger(RenderProbe.class);
+
 	@Override
 	public void start(Stage stage)
 	{
@@ -49,11 +53,11 @@ public class RenderProbe extends Application
 				WritableImage img = analyzer.snapshot(new SnapshotParameters(), null);
 				File out = new File("target/probe.png");
 				ImageIO.write(SwingFXUtils.fromFXImage(img, null), "png", out);
-				System.out.println("PROBE_WROTE " + out.getAbsolutePath());
+				log.info("probe wrote {}", out.getAbsolutePath());
 			}
 			catch (Exception ex)
 			{
-				ex.printStackTrace();
+				log.warn("probe snapshot failed", ex);
 			}
 			finally
 			{

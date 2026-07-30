@@ -26,6 +26,7 @@
     <javafx.version>21.0.5</javafx.version>
     <junit.version>5.11.3</junit.version>
     <tarsosdsp.version>2.5</tarsosdsp.version>
+    <slf4j.version>2.0.16</slf4j.version>
     <formatter.plugin.version>2.29.0</formatter.plugin.version>
     <app.mainClass>com.fohanalyzer.Main</app.mainClass>
   </properties>
@@ -61,6 +62,24 @@
       <groupId>be.tarsos.dsp</groupId>
       <artifactId>core</artifactId>
       <version>${tarsosdsp.version}</version>
+    </dependency>
+
+    <!--
+      Logging. slf4j-simple rather than Logback: this app writes a handful of warnings and
+      dev-aid lines, so a full backend buys nothing, and both artifacts are MIT — Logback is
+      EPL-1.0/LGPL-2.1, which would add a licence question to a GPL-3.0 distribution that
+      does not need one.
+    -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+      <scope>runtime</scope>
     </dependency>
 
     <dependency>

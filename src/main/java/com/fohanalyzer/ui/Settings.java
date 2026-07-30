@@ -2,6 +2,8 @@ package com.fohanalyzer.ui;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Set;
@@ -21,6 +23,7 @@ import java.util.prefs.Preferences;
  */
 public final class Settings
 {
+	private static final Logger log = LoggerFactory.getLogger(Settings.class);
 
 	private static final String SPL_OFFSET = "splOffset";
 	private static final String CAL_REF_SPL = "calRefSpl";
@@ -92,7 +95,7 @@ public final class Settings
 		}
 		catch (BackingStoreException e)
 		{
-			System.err.println("[settings] could not flush: " + e.getMessage());
+			log.warn("could not flush settings: {}", e.getMessage());
 		}
 	}
 
@@ -131,7 +134,7 @@ public final class Settings
 		}
 		catch (BackingStoreException e)
 		{
-			System.err.println("[settings] could not clear: " + e.getMessage());
+			log.warn("could not clear settings: {}", e.getMessage());
 		}
 	}
 

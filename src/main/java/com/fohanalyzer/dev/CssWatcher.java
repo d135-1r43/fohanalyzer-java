@@ -2,6 +2,10 @@ package com.fohanalyzer.dev;
 
 import javafx.application.Platform;
 import javafx.scene.Scene;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
+import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -10,9 +14,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
-
-import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
-import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 
 /**
  * Dev aid: re-applies {@code theme.css} to a live {@link Scene} whenever the
@@ -27,6 +28,7 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
  */
 public final class CssWatcher
 {
+	private static final Logger log = LoggerFactory.getLogger(CssWatcher.class);
 
 	/**
 	 * Relative to the working directory, which is the project root under
@@ -58,7 +60,7 @@ public final class CssWatcher
 		Path css = Path.of(SOURCE).toAbsolutePath();
 		if (!Files.isRegularFile(css))
 		{
-			System.out.println("[dev] no stylesheet at " + css + " — CSS watch disabled");
+			log.info("no stylesheet at {} — CSS watch disabled", css);
 			return;
 		}
 
@@ -66,7 +68,7 @@ public final class CssWatcher
 		Thread watcher = new Thread(() -> watch(scene, css), "css-watch");
 		watcher.setDaemon(true);
 		watcher.start();
-		System.out.println("[dev] watching " + css);
+		log.info("watching {}", css);
 	}
 
 	private static void watch(Scene scene, Path css)
@@ -90,7 +92,7 @@ public final class CssWatcher
 		}
 		catch (IOException e)
 		{
-			System.out.println("[dev] CSS watch stopped: " + e);
+			log.info("CSS watch stopped: {}", e.toString());
 		}
 	}
 
@@ -113,11 +115,11 @@ public final class CssWatcher
 			scene.getStylesheets().setAll(copy.toUri().toString());
 			if (previous != null) Files.deleteIfExists(previous);
 			previous = copy;
-			System.out.println("[dev] theme.css reloaded");
+			log.info("theme.css reloaded");
 		}
 		catch (IOException e)
 		{
-			System.out.println("[dev] reload failed: " + e);
+			log.warn("reload failed: {}", e.toString());
 		}
 	}
 }
