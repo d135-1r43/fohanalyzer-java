@@ -17,7 +17,6 @@ import java.util.List;
  */
 final class SourceLabel
 {
-
 	static final String LIVE_PREFIX = "live:";
 
 	private SourceLabel()

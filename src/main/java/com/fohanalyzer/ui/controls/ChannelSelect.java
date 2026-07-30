@@ -21,7 +21,6 @@ import java.util.List;
  */
 public final class ChannelSelect extends VBox
 {
-
 	private final StringProperty value;
 	private final List<InputPreset> options;
 	private final ObservableList<AudioDevice> audioDevices;

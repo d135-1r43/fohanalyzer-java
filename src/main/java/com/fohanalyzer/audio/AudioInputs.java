@@ -13,7 +13,6 @@ import java.util.List;
  */
 public final class AudioInputs
 {
-
 	private AudioInputs()
 	{
 	}

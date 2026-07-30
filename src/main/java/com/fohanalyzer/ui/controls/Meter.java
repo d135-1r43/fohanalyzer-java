@@ -9,7 +9,6 @@ import javafx.scene.layout.StackPane;
  */
 public final class Meter extends StackPane
 {
-
 	private final Region fill = new Region();
 	private final String color;
 

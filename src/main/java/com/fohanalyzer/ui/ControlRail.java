@@ -26,7 +26,6 @@ import java.util.Random;
  */
 public final class ControlRail extends ScrollPane
 {
-
 	private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
 	private final AppState state;
 	private final Settings settings;

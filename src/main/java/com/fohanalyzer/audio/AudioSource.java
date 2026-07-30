@@ -18,7 +18,6 @@ import javax.sound.sampled.TargetDataLine;
  */
 public final class AudioSource
 {
-
 	public static final int FFT_SIZE = 16384;
 	private static final float TARGET_RATE = 48000f;
 
@@ -88,7 +87,7 @@ public final class AudioSource
 
 			sampleRate = format.getSampleRate();
 			channelCount = format.getChannels();
-			this.channelIndex = Math.min(Math.max(0, channelIndex), channelCount - 1);
+			this.channelIndex = Math.clamp(channelIndex, 0, channelCount - 1);
 			deviceId = device.id();
 
 			running = true;
@@ -163,7 +162,7 @@ public final class AudioSource
 			this.channelIndex = 0;
 			return;
 		}
-		this.channelIndex = Math.min(Math.max(0, channelIndex), channelCount - 1);
+		this.channelIndex = Math.clamp(channelIndex, 0, channelCount - 1);
 	}
 
 	public synchronized void disconnect()
@@ -255,7 +254,7 @@ public final class AudioSource
 	/** Per-band dBFS levels, or {@code null} if not connected. */
 	public float[] readBands(double[] centers, int frac)
 	{
-		if (!isConnected()) return null;
+		if (!isConnected()) return new float[0];
 		double[] spec = AudioDsp.spectrumDb(snapshotWindow());
 		double binHz = sampleRate / FFT_SIZE;
 		return AudioDsp.bands(spec, binHz, centers, frac);

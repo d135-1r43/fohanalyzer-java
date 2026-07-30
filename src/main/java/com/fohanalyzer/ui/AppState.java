@@ -17,7 +17,6 @@ import java.util.List;
  */
 public final class AppState
 {
-
 	public static final List<InputPreset> MIC_INPUTS = List.of(
 		new InputPreset("ch32", "Ch 32 · Meas Mic", 0, 0),
 		new InputPreset("ch31", "Ch 31 · Meas Mic", -1.5, 0.3),

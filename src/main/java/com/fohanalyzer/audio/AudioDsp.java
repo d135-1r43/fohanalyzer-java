@@ -19,7 +19,6 @@ import java.util.Map;
  */
 public final class AudioDsp
 {
-
 	/**
 	 * Window length handed to YIN — TarsosDSP's own default for
 	 * {@link FastYin}.

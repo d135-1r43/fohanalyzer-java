@@ -8,7 +8,6 @@ import com.fohanalyzer.engine.Voice;
  */
 public final class SignalState
 {
-
 	private int frac = 0;
 	public float[] avgMic, avgSolo;
 	public float[] dispMic, dispSolo;

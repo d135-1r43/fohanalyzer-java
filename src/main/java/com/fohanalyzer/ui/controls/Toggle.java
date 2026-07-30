@@ -10,7 +10,6 @@ import javafx.scene.shape.Circle;
  */
 public final class Toggle extends Region
 {
-
 	private final Circle knob = new Circle(8);
 	private final BooleanProperty value;
 	private final String color;

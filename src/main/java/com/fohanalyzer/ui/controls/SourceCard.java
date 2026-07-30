@@ -27,7 +27,6 @@ import java.util.List;
  */
 public final class SourceCard extends VBox
 {
-
 	public final Meter meter;
 
 	public SourceCard(String name, String color,

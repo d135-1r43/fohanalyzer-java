@@ -18,7 +18,6 @@ import java.io.InputStream;
  */
 public final class Fonts
 {
-
 	private static final String FONT_DIR = "/com/fohanalyzer/fonts/";
 
 	private static final String[] BUNDLED = {

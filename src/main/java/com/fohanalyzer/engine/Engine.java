@@ -10,7 +10,6 @@ import java.util.Locale;
  */
 public final class Engine
 {
-
 	public static final double FMIN = 20, FMAX = 20000;
 	private static final double LOGMIN = log2(FMIN);
 	private static final double LOGMAX = log2(FMAX);

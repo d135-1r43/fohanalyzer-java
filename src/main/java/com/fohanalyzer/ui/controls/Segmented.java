@@ -14,7 +14,6 @@ import java.util.Map;
  */
 public final class Segmented extends HBox
 {
-
 	private final IntegerProperty value;
 	private final Map<Integer, Button> buttons = new LinkedHashMap<>();
 

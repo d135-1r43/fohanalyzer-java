@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SettingsTest
 {
-
 	private Preferences node;
 	private Settings settings;
 

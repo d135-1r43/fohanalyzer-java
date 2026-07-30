@@ -23,7 +23,6 @@ import java.util.List;
  */
 public final class Draw
 {
-
 	public static final double DB_TOP = -6, DB_BOT = -90;
 	public static final double PAD_L = 50, PAD_R = 16, PAD_T = 18, PAD_B = 50;
 

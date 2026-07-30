@@ -9,7 +9,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Frequency math, note naming, formatting, and the signal simulator. */
 class EngineTest
 {
-
 	private static final double EPS = 1e-9;
 
 	@Nested

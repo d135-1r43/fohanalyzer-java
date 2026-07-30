@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /** Band allocation, averaging, smoothing, peak hold, and voicing. */
 class SignalStateTest
 {
-
 	static final Voice NO_VOICE = Voice.NEUTRAL;
 	static final double[] centers = { 100, 500, 1000, 4000, 10000 };
 	static final int n = centers.length;

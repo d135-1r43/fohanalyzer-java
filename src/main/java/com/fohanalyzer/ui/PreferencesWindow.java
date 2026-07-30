@@ -31,7 +31,6 @@ import java.util.Locale;
  */
 public final class PreferencesWindow
 {
-
 	private static final double DEFAULT_W = 420;
 	private static final double DEFAULT_H = 520;
 

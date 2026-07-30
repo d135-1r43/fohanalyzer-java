@@ -11,7 +11,6 @@ package com.fohanalyzer;
  */
 public final class Version
 {
-
 	/** Shown when there is no manifest, i.e. an unpackaged development run. */
 	public static final String DEV = "dev";
 

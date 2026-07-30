@@ -11,7 +11,6 @@ import javafx.scene.transform.Scale;
  */
 public final class Logo extends Pane
 {
-
 	/** The 34px logo used in the header. */
 	public Logo()
 	{

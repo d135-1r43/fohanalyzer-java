@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class AudioDspTest
 {
-
 	private static final int N = AudioSource.FFT_SIZE;
 	private static final float RATE = 48000f;
 

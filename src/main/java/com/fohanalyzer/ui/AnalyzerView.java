@@ -17,7 +17,6 @@ import javafx.scene.paint.Color;
  */
 public final class AnalyzerView extends Region
 {
-
 	// 22 ms, i.e. ~45 Hz
 	private static final double FRAME_SEC = 0.022;
 
@@ -68,14 +67,16 @@ public final class AnalyzerView extends Region
 	@Override
 	protected void layoutChildren()
 	{
-		double w = getWidth(), h = getHeight();
+		double w = getWidth();
+		double h = getHeight();
 		canvas.setWidth(w);
 		canvas.setHeight(h);
 	}
 
 	private void frame(double t)
 	{
-		double width = canvas.getWidth(), height = canvas.getHeight();
+		double width = canvas.getWidth();
+		double height = canvas.getHeight();
 		if (width <= 0 || height <= 0) return;
 		GraphicsContext g = canvas.getGraphicsContext2D();
 		double plotW = width - Draw.PAD_L - Draw.PAD_R;
