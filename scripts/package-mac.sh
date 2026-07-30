@@ -27,6 +27,11 @@ JDK_MODULES="java.base,java.desktop,java.logging,java.prefs,java.xml,jdk.unsuppo
 VERSION="$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
 JAR="fohanalyzer-java-${VERSION}.jar"
 
+# jpackage takes a numeric X[.Y[.Z]] app version and rejects anything else, so a snapshot
+# build has to hand it the release number. The .dmg is renamed back to the full version
+# below, so what lands in target/dist still says which build it is.
+APP_VERSION="${VERSION%-SNAPSHOT}"
+
 echo "==> building $APP_NAME $VERSION"
 mvn -B -q clean package
 
@@ -45,7 +50,7 @@ echo "==> jpackage app-image"
 jpackage \
   --type app-image \
   --name "$APP_NAME" \
-  --app-version "$VERSION" \
+  --app-version "$APP_VERSION" \
   --vendor "Markus Herhoffer" \
   --description "Real-time dual-channel RTA for Front-of-House engineers" \
   --copyright "GPL-3.0-or-later" \
@@ -82,9 +87,13 @@ if [ "$TYPE" != "app-image" ]; then
   jpackage \
     --type dmg \
     --name "$APP_NAME" \
-    --app-version "$VERSION" \
+    --app-version "$APP_VERSION" \
     --app-image "$APP" \
     --dest "$DIST"
+
+  if [ "$VERSION" != "$APP_VERSION" ]; then
+    mv "$DIST/$APP_NAME-$APP_VERSION.dmg" "$DIST/$APP_NAME-$VERSION.dmg"
+  fi
 fi
 
 echo "==> done"

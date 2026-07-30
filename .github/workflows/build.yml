@@ -1,0 +1,91 @@
+name: Build
+
+# The deliverable is a jpackage bundle, which can only be built on the target OS, so
+# everything runs on a macOS runner. macos-latest is arm64 — the .dmg it produces is
+# arm64-only; an Intel or universal build would need a second runner.
+
+on:
+  push:
+    branches: [master]
+    # Both the maven-release-plugin default tag format (artifactId-version) and the
+    # v-prefixed one, so either release configuration triggers a release build.
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'fohanalyzer-java-[0-9]+.[0-9]+.[0-9]+'
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    permissions:
+      # Only the release step needs this; on branch and PR builds it goes unused.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # jpackage is what needs a recent JDK; the project itself targets release 21.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Read the version from the pom
+        id: pom
+        run: |
+          version="$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "building $version"
+
+      # A tag that disagrees with the pom would publish a release whose bundle carries a
+      # different version, so fail before anything is built.
+      - name: Check the tag against the pom version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          tag_version="${GITHUB_REF_NAME#v}"
+          tag_version="${tag_version#fohanalyzer-java-}"
+          pom_version='${{ steps.pom.outputs.version }}'
+          if [ "$tag_version" != "$pom_version" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the pom version $pom_version"
+            exit 1
+          fi
+          case "$pom_version" in
+            *-SNAPSHOT)
+              echo "::error::refusing to release a snapshot version ($pom_version)"
+              exit 1
+              ;;
+          esac
+
+      # package-mac.sh runs `mvn clean package` on the way, so the formatter gate and the
+      # tests both run here before jpackage is reached.
+      - name: Build
+        run: ./scripts/package-mac.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: FOHanalyzer-${{ steps.pom.outputs.version }}
+          path: target/dist/*.dmg
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "FOHanalyzer ${{ steps.pom.outputs.version }}" \
+            --generate-notes \
+            --notes "The bundle is ad-hoc signed and not notarised, so Gatekeeper refuses
+          the first launch on another Mac: right-click the app and choose **Open**.
+          Built for Apple silicon." \
+            target/dist/*.dmg
