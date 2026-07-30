@@ -33,9 +33,9 @@
   </licenses>
 
   <properties>
-    <maven.compiler.release>21</maven.compiler.release>
+    <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <javafx.version>21.0.5</javafx.version>
+    <javafx.version>26.0.2</javafx.version>
     <junit.version>5.11.3</junit.version>
     <tarsosdsp.version>2.5</tarsosdsp.version>
     <slf4j.version>2.0.16</slf4j.version>

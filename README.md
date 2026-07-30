@@ -14,7 +14,7 @@
   <a href="https://github.com/d135-1r43/fohanalyzer-java/actions/workflows/build.yml">
     <img src="https://github.com/d135-1r43/fohanalyzer-java/actions/workflows/build.yml/badge.svg" alt="Build status">
   </a>
-  <img src="https://img.shields.io/badge/Java-21%2B-orange" alt="Java 21+">
+  <img src="https://img.shields.io/badge/Java-25%20LTS-orange" alt="Java 25 LTS">
   <img src="https://img.shields.io/badge/UI-JavaFX-blue" alt="JavaFX">
   <img src="https://img.shields.io/badge/licence-GPL--3.0--or--later-green" alt="GPL-3.0-or-later">
 </p>
@@ -54,7 +54,7 @@ measurement mic and console feeds, and without it the analyser has nothing to re
 
 ## Development
 
-Needs **JDK 21+** (built and tested on Temurin 25) and **Maven 3.9+**.
+Needs **JDK 25+** (the current LTS; built and tested on Temurin 25) and **Maven 3.9+**.
 
 ```bash
 mvn javafx:run   # run
@@ -191,8 +191,10 @@ included) and `Fonts.install()` registers them with JavaFX before the stylesheet
 Without that step the app silently fell back to Helvetica Neue and Menlo.
 
 Barlow stands in for **Saira** — the squarish technical grotesque the design calls for —
-because Saira is only published as a variable font and JavaFX 21 cannot select an axis
-instance. Saira is kept next in the CSS stack for anyone who has it installed locally.
+because Saira is only published as a variable font and JavaFX 21 could not select an axis
+instance. That was measured against JavaFX 21 and has not been re-checked since the move to
+26 — if it now resolves a named instance, the stand-in is no longer necessary. Saira is kept
+next in the CSS stack for anyone who has it installed locally.
 Regular and Bold are bundled per family; the SemiBold (600) faces are available from the
 upstream font projects if the headings want a lighter weight.
 

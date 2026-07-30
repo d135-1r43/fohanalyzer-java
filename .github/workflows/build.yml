@@ -33,7 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # jpackage is what needs a recent JDK; the project itself targets release 21.
+      # Also what the project targets: release 25, the current LTS.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
