@@ -16,35 +16,64 @@ import javafx.scene.shape.Circle;
 import java.util.List;
 
 /**
- * A source panel: indicator dot, name, on/off toggle, channel selector, level
- * meter, and a marker-select pill.
+ * A source panel: indicator dot, name, on/off toggle, level meter, and a
+ * marker-select pill.
+ *
+ * <p>
+ * Which device feeds the source is chosen once per rig, so the picker itself
+ * lives in the preferences window. What the card keeps is a read-only line
+ * naming the current selection — during a show you still need to see at a
+ * glance whether a trace is a live input or a simulation, and on which channel.
  */
 public final class SourceCard extends VBox
 {
 
 	public final Meter meter;
 
-	public SourceCard(String name, String sub, String color,
+	public SourceCard(String name, String color,
 		BooleanProperty on, StringProperty markerSource, String markerId,
 		List<InputPreset> options, StringProperty chan,
 		IntegerProperty chanIdx, IntegerProperty chanCount,
 		ObservableList<AudioDevice> audioDevices)
 	{
 		getStyleClass().add("src-card");
-		setSpacing(11);
+		setSpacing(9);
 
 		Circle dot = new Circle(4.5, Color.web(color));
 		Label nameLbl = new Label(name);
 		nameLbl.getStyleClass().add("src-name");
-		Label subLbl = new Label(sub);
-		subLbl.getStyleClass().add("src-sub");
-		VBox names = new VBox(2, nameLbl, subLbl);
-		HBox.setHgrow(names, Priority.ALWAYS);
+		HBox.setHgrow(nameLbl, Priority.ALWAYS);
+		nameLbl.setMaxWidth(Double.MAX_VALUE);
 		Toggle toggle = new Toggle(on, color);
-		HBox top = new HBox(10, dot, names, toggle);
+		HBox top = new HBox(10, dot, nameLbl, toggle);
 		top.setAlignment(Pos.CENTER_LEFT);
 
-		ChannelSelect chanSel = new ChannelSelect(chan, options, audioDevices, color, chanIdx, chanCount);
+		Label tag = new Label();
+		tag.getStyleClass().add("chan-tag");
+		Label selection = new Label();
+		selection.getStyleClass().add("src-sel");
+		HBox.setHgrow(selection, Priority.ALWAYS);
+		selection.setMaxWidth(Double.MAX_VALUE);
+		HBox sel = new HBox(8, tag, selection);
+		sel.setAlignment(Pos.CENTER_LEFT);
+
+		Runnable refreshSel = () -> {
+			String value = chan.get();
+			boolean live = SourceLabel.isLive(value);
+			tag.setText(SourceLabel.tag(value));
+			String tc = live ? "#a3e635" : color;
+			tag.setStyle("-fx-text-fill:" + tc + "; -fx-border-color:" + tc + ";");
+			// The channel only means anything on a multi-channel live input.
+			String suffix = live && chanCount.get() > 1
+				? "  ·  Ch " + (chanIdx.get() + 1)
+				: "";
+			selection.setText(SourceLabel.of(value, options, audioDevices) + suffix);
+		};
+		chan.addListener((o, a, b) -> refreshSel.run());
+		chanIdx.addListener((o, a, b) -> refreshSel.run());
+		chanCount.addListener((o, a, b) -> refreshSel.run());
+		audioDevices.addListener((javafx.collections.ListChangeListener<AudioDevice>)c -> refreshSel.run());
+		refreshSel.run();
 
 		meter = new Meter(color);
 		Button markerPill = new Button();
@@ -67,6 +96,6 @@ public final class SourceCard extends VBox
 		on.addListener((o, a, b) -> setOpacity(b ? 1.0 : 0.5));
 		setOpacity(on.get() ? 1.0 : 0.5);
 
-		getChildren().addAll(top, chanSel, bottom);
+		getChildren().addAll(top, sel, bottom);
 	}
 }

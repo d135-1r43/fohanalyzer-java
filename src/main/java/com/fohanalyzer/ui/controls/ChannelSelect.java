@@ -92,26 +92,14 @@ public final class ChannelSelect extends VBox
 
 	private boolean isLive()
 	{
-		return value.get().startsWith("live:");
+		return SourceLabel.isLive(value.get());
 	}
 
 	private void refresh()
 	{
 		boolean live = isLive();
-		String label;
-		if (live)
-		{
-			String id = value.get().substring(5);
-			label = audioDevices.stream().filter(d -> d.id().equals(id))
-				.findFirst().map(AudioDevice::label).orElse("Unknown device");
-		}
-		else
-		{
-			label = options.stream().filter(p -> p.id().equals(value.get()))
-				.findFirst().map(InputPreset::label).orElse(options.isEmpty() ? "" : options.get(0).label());
-		}
-		valLabel.setText(label);
-		tag.setText(live ? "LIVE" : "SIM");
+		valLabel.setText(SourceLabel.of(value.get(), options, audioDevices));
+		tag.setText(SourceLabel.tag(value.get()));
 		String tc = live ? "#a3e635" : color;
 		tag.setStyle("-fx-text-fill:" + tc + "; -fx-border-color:" + tc + ";");
 
@@ -129,7 +117,7 @@ public final class ChannelSelect extends VBox
 			menu.getItems().add(header("Live inputs"));
 			for (AudioDevice d : audioDevices)
 			{
-				String devVal = "live:" + d.id();
+				String devVal = SourceLabel.LIVE_PREFIX + d.id();
 				MenuItem mi = new MenuItem((value.get().equals(devVal) ? "● " : "   ") + d.label());
 				mi.setOnAction(e -> {
 					value.set(devVal);

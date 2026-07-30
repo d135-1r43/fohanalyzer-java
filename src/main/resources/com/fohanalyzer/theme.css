@@ -127,6 +127,19 @@
 .btn-ring { -fx-background-color: rgba(245,87,93,0.10); -fx-text-fill: #ff8a8e; -fx-border-color: rgba(245,87,93,0.4); }
 .btn-clear { -fx-background-color: #131b25; -fx-text-fill: -txt-dim; -fx-border-color: -line; }
 .btn-detect { -fx-background-color: rgba(163,230,53,0.08); -fx-text-fill: -lime; -fx-border-color: rgba(163,230,53,0.35); }
+.btn-prefs {
+    -fx-background-color: #131b25; -fx-text-fill: -txt-dim; -fx-border-color: -line;
+    -fx-font-size: 12px; -fx-padding: 9;
+}
+.btn-prefs:hover { -fx-text-fill: -txt; -fx-border-color: -txt-mut; }
+
+/* ---- preferences window ---- */
+.prefs-root { -fx-background-color: -bg; }
+.prefs-body { -fx-padding: 18 22 18 22; }
+.prefs-foot {
+    -fx-padding: 12 22 16 22; -fx-border-color: -line; -fx-border-width: 1 0 0 0;
+    -fx-background-color: -panel;
+}
 
 /* ---- source card ---- */
 .src-card {
@@ -134,7 +147,8 @@
     -fx-border-radius: 10; -fx-background-radius: 10; -fx-padding: 11 12 11 12; -fx-spacing: 11;
 }
 .src-name { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: -txt; }
-.src-sub { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 9.5px; -fx-text-fill: -txt-mut; }
+/* The read-only echo of what the preferences window has this source set to. */
+.src-sel { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-dim; }
 .marker-pill {
     -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 10px;
     -fx-background-color: transparent; -fx-border-color: -line; -fx-text-fill: -txt-mut;

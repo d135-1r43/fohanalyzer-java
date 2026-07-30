@@ -86,9 +86,10 @@ Live input is captured from a `javax.sound.sampled.TargetDataLine` on a daemon t
 into a 16384-sample ring buffer. Each frame, the latest window is Blackman-windowed and
 transformed with [TarsosDSP](https://github.com/JorenSix/TarsosDSP)
 (`be.tarsos.dsp.util.fft.FFT` + `BlackmanWindow`); per-bin magnitude is normalised by the
-FFT size and converted to dBFS. Choose a live device per source from its dropdown;
-multi-channel interfaces expose a channel stepper. SPL metering (with calibration) appears
-when the measurement mic is a live input.
+FFT size and converted to dBFS. Choose a live device per source in *Preferences*;
+multi-channel interfaces expose a channel stepper there. The rail keeps a read-only line
+naming what each source is set to. SPL metering appears when the measurement mic is a live
+input, and is calibrated from *Preferences* too.
 
 TarsosDSP is not on Maven Central; the POM adds the author's repository
 (`https://mvn.0110.be/releases`) and pulls `be.tarsos.dsp:core`, which has no transitive
@@ -98,6 +99,20 @@ dependency set — relevant if the app is ever distributed.
 Only the `core` module is used. The `jvm` module's `AudioDispatcher` is deliberately not
 used for capture: it consumes a mono stream, which would give up the per-channel selection
 this app needs on multi-channel interfaces (Scarlett 18i20, Behringer Wing, …).
+
+### Rail vs preferences
+
+The rail is ordered by how often a hand reaches for something mid-show: the source traces
+and what they read, then ring-out assist, the overlays, and the analysis settings
+(resolution, smoothing, averaging) last. Everything decided once when the rig is patched —
+which device feeds each source, and the SPL calibration — lives in a separate *Preferences*
+window instead, so it is not competing for the column you have to read during a show.
+
+The source cards still carry a read-only line naming the current selection, because "is
+this trace live or simulated, and on which channel" is a question you ask at a glance while
+working, even though the answer is only *set* once. Nothing in that window is a commit
+step: the controls bind straight to the shared state that is persisted anyway, so there is
+no OK/Cancel and nothing to apply.
 
 ### Saved settings
 

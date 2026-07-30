@@ -30,6 +30,7 @@ public final class ControlRail extends ScrollPane
 	private static final DateTimeFormatter HHMM = DateTimeFormatter.ofPattern("HH:mm");
 	private final AppState state;
 	private final Settings settings;
+	private final PreferencesWindow preferences;
 	private final Random rng = new Random();
 
 	private SourceCard micCard, soloCard;
@@ -38,6 +39,7 @@ public final class ControlRail extends ScrollPane
 	{
 		this.state = state;
 		this.settings = settings;
+		this.preferences = new PreferencesWindow(state);
 		getStyleClass().add("scroll-pane");
 		setFitToWidth(true);
 		setHbarPolicy(ScrollBarPolicy.NEVER);
@@ -45,14 +47,17 @@ public final class ControlRail extends ScrollPane
 		VBox rail = new VBox();
 		rail.getStyleClass().add("rail");
 
+		// Ordered by how often a hand reaches for it mid-show: the traces and
+		// what they read, then the feedback tool, then the overlays, and the
+		// analysis settings last. Anything set once per rig is in the
+		// preferences window instead.
 		rail.getChildren().addAll(
 			sourcesSection(),
 			splSection(),
-			resolutionSection(),
-			responseSection(),
+			ringoutSection(),
 			overlaysSection(),
 			referenceSection(),
-			ringoutSection(),
+			analysisSection(),
 			railFoot());
 
 		// Push live stats into the meters / SPL readout.
@@ -64,10 +69,10 @@ public final class ControlRail extends ScrollPane
 	// ---- Sources ----------------------------------------------------------
 	private VBox sourcesSection()
 	{
-		micCard = new SourceCard("Measurement Mic", "Room · capture", "#22d3ee",
+		micCard = new SourceCard("Measurement Mic", "#22d3ee",
 			state.micOn, state.markerSource, "mic", AppState.MIC_INPUTS,
 			state.micChan, state.micChanIdx, state.micChanCount, state.audioDevices);
-		soloCard = new SourceCard("Solo Bus", "Console · PFL/AFL", "#f5a524",
+		soloCard = new SourceCard("Solo Bus", "#f5a524",
 			state.soloOn, state.markerSource, "solo", AppState.SOLO_INPUTS,
 			state.soloChan, state.soloChanIdx, state.soloChanCount, state.audioDevices);
 		return section("Sources", micCard, soloCard);
@@ -103,38 +108,9 @@ public final class ControlRail extends ScrollPane
 		display.getStyleClass().add("spl-display");
 		display.setAlignment(Pos.CENTER_LEFT);
 
-		TextField ref = new TextField(fmtRef(state.calRefSpl.get()));
-		ref.getStyleClass().add("spl-input");
-		ref.setPrefWidth(68);
-		ref.textProperty().addListener((o, a, b) -> {
-			try
-			{
-				state.calRefSpl.set(Double.parseDouble(b));
-			}
-			catch (NumberFormatException ignored)
-			{
-			}
-		});
-		// Keep the field in step when the value arrives from somewhere else —
-		// a restored setting or a reset — without fighting the user's own
-		// typing.
-		state.calRefSpl.addListener((o, a, b) -> {
-			String text = fmtRef(b.doubleValue());
-			if (!text.equals(ref.getText().trim())) ref.setText(text);
-		});
-		Label refLbl = new Label("dB SPL ref");
-		refLbl.getStyleClass().add("hint");
-		HBox.setHgrow(refLbl, Priority.ALWAYS);
-		Button calBtn = new Button("Calibrate");
-		calBtn.getStyleClass().add("mini-btn");
-		calBtn.setOnAction(e -> calibrate());
-		HBox calRow = new HBox(8, ref, refLbl, calBtn);
-		calRow.setAlignment(Pos.CENTER_LEFT);
-
-		Label hint = new Label("Play a known reference level, enter it, then tap Calibrate.");
-		hint.getStyleClass().add("hint");
-
-		VBox sec = section("SPL Meter", display, calRow, hint);
+		// Calibrating is a set-once job and lives in the preferences
+		// window; what stays here is the reading itself.
+		VBox sec = section("SPL Meter", display);
 
 		// visible only when the mic source is live
 		Runnable vis = () -> {
@@ -149,17 +125,6 @@ public final class ControlRail extends ScrollPane
 		return sec;
 	}
 
-	/**
-	 * {@code 94.0 -> "94"}, so a restored whole number does not read as a
-	 * measurement.
-	 */
-	private static String fmtRef(double v)
-	{
-		return v == Math.rint(v)
-			? Long.toString(Math.round(v))
-			: String.format(java.util.Locale.US, "%.1f", v);
-	}
-
 	private void updateSplBadge()
 	{
 		boolean cal = state.splOffset.get() != 0;
@@ -168,30 +133,24 @@ public final class ControlRail extends ScrollPane
 		if (cal) splBadge.getStyleClass().add("spl-badge-cal");
 	}
 
-	private void calibrate()
+	// ---- Analysis ---------------------------------------------------------
+	/**
+	 * Resolution, smoothing and averaging were three sections deep in the rail;
+	 * they are all "how the plot is computed" and read better as one block at
+	 * the foot of it.
+	 */
+	private VBox analysisSection()
 	{
-		Double rms = state.stats.get().micRmsDbfs();
-		if (rms != null) state.splOffset.set(state.calRefSpl.get() - rms);
-	}
+		Map<Integer, String> fracOpts = new LinkedHashMap<>();
+		fracOpts.put(1, "1/1");
+		fracOpts.put(3, "1/3");
+		fracOpts.put(6, "1/6");
+		fracOpts.put(12, "1/12");
+		fracOpts.put(24, "1/24");
+		Label resLbl = new Label("Resolution");
+		resLbl.getStyleClass().add("row-lbl");
+		Segmented frac = new Segmented(state.frac, fracOpts);
 
-	// ---- Resolution -------------------------------------------------------
-	private VBox resolutionSection()
-	{
-		Map<Integer, String> opts = new LinkedHashMap<>();
-		opts.put(1, "1/1");
-		opts.put(3, "1/3");
-		opts.put(6, "1/6");
-		opts.put(12, "1/12");
-		opts.put(24, "1/24");
-		Segmented seg = new Segmented(state.frac, opts);
-		Label hint = new Label("Octave-band averaging width");
-		hint.getStyleClass().add("hint");
-		return section("Resolution", seg, hint);
-	}
-
-	// ---- Response ---------------------------------------------------------
-	private VBox responseSection()
-	{
 		Label lbl = new Label("Smoothing");
 		lbl.getStyleClass().add("row-lbl");
 		Label val = new Label();
@@ -208,15 +167,15 @@ public final class ControlRail extends ScrollPane
 
 		Label avgLbl = new Label("Averaging");
 		avgLbl.getStyleClass().add("row-lbl");
-		Map<Integer, String> opts = new LinkedHashMap<>();
-		opts.put(1, "Off");
-		opts.put(2, "2");
-		opts.put(4, "4");
-		opts.put(8, "8");
-		opts.put(16, "16");
-		Segmented avg = new Segmented(state.avgN, opts);
+		Map<Integer, String> avgOpts = new LinkedHashMap<>();
+		avgOpts.put(1, "Off");
+		avgOpts.put(2, "2");
+		avgOpts.put(4, "4");
+		avgOpts.put(8, "8");
+		avgOpts.put(16, "16");
+		Segmented avg = new Segmented(state.avgN, avgOpts);
 
-		return section("Response", row, slider, avgLbl, avg);
+		return section("Analysis", resLbl, frac, row, slider, avgLbl, avg);
 	}
 
 	// ---- Overlays ---------------------------------------------------------
@@ -511,8 +470,13 @@ public final class ControlRail extends ScrollPane
 		state.micChan.addListener((o, a, b) -> f.setText(footText()));
 		state.soloChan.addListener((o, a, b) -> f.setText(footText()));
 
+		Button prefs = new Button("⚙  Preferences…");
+		prefs.getStyleClass().addAll("btn", "btn-prefs");
+		prefs.setMaxWidth(Double.MAX_VALUE);
+		prefs.setOnAction(e -> preferences.show(getScene() != null ? getScene().getWindow() : null));
+
 		Button resetAll = miniBtn("Reset saved settings", e -> confirmReset());
-		VBox box = new VBox(10, f, resetAll);
+		VBox box = new VBox(10, prefs, f, resetAll);
 		box.setAlignment(Pos.CENTER);
 		VBox.setVgrow(box, Priority.ALWAYS);
 		box.setStyle("-fx-padding:16 0 14 0;");
