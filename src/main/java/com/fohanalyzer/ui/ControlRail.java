@@ -1,5 +1,6 @@
 package com.fohanalyzer.ui;
 
+import com.fohanalyzer.Version;
 import com.fohanalyzer.audio.AudioDsp;
 import com.fohanalyzer.audio.AudioSource;
 import com.fohanalyzer.dsp.Stats;
@@ -12,6 +13,7 @@ import com.fohanalyzer.ui.controls.Toggle;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.text.TextAlignment;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -491,12 +493,23 @@ public final class ControlRail extends ScrollPane
 		return sec;
 	}
 
+	private String footText()
+	{
+		return "FOHanalyzer " + Version.VALUE + " · " + state.signalStatus();
+	}
+
 	private VBox railFoot()
 	{
-		Label f = new Label("FOHanalyzer 2.3.1 · " + state.signalStatus());
+		Label f = new Label(footText());
 		f.getStyleClass().add("rail-foot");
-		state.micChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + state.signalStatus()));
-		state.soloChan.addListener((o, a, b) -> f.setText("FOHanalyzer 2.3.1 · " + state.signalStatus()));
+		// A version is as long as it wants to be — "2.4.0-SNAPSHOT" against the
+		// two-source status already overruns the 298px column — so let the line
+		// wrap rather than ellipsise the status away.
+		f.setWrapText(true);
+		f.setMaxWidth(Double.MAX_VALUE);
+		f.setTextAlignment(TextAlignment.CENTER);
+		state.micChan.addListener((o, a, b) -> f.setText(footText()));
+		state.soloChan.addListener((o, a, b) -> f.setText(footText()));
 
 		Button resetAll = miniBtn("Reset saved settings", e -> confirmReset());
 		VBox box = new VBox(10, f, resetAll);

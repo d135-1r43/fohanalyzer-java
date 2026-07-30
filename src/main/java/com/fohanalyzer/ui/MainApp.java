@@ -1,5 +1,6 @@
 package com.fohanalyzer.ui;
 
+import com.fohanalyzer.Version;
 import com.fohanalyzer.audio.AudioDevice;
 import com.fohanalyzer.audio.AudioInputs;
 import com.fohanalyzer.audio.AudioSource;
@@ -138,7 +139,7 @@ public class MainApp extends Application
 		top.getStyleClass().add("wm-top");
 		Label sub = new Label("DUAL SPECTRUM · RTA");
 		sub.getStyleClass().add("wm-sub");
-		Label ver = new Label("2.3.1");
+		Label ver = new Label(Version.VALUE);
 		ver.getStyleClass().add("ver-chip");
 		// Chip on the title's own line, so it sits at cap height instead of
 		// floating between the two wordmark lines.
