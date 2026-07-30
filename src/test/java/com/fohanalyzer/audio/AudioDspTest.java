@@ -6,9 +6,8 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Behavioural port of src/lib/audioInput.test.js. The browser-only getUserMedia
- * plumbing is skipped; the spectral math is exercised directly with synthetic
- * buffers.
+ * Exercises the spectral math directly with synthetic buffers; the device
+ * capture plumbing around it is not covered here.
  */
 class AudioDspTest
 {

@@ -18,9 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Canvas drawing routines, ported from {@code src/lib/draw.js} to a JavaFX
- * {@link GraphicsContext}. The plot is laid out with the same padding and
- * dB/freq mappings as the original.
+ * Canvas drawing routines against a JavaFX {@link GraphicsContext}. The plot
+ * padding and the dB/frequency mappings are defined here.
  */
 public final class Draw
 {

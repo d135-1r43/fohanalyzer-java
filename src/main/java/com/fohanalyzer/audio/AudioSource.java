@@ -8,8 +8,7 @@ import javax.sound.sampled.TargetDataLine;
 
 /**
  * Live capture from a {@link TargetDataLine}, exposing per-band dBFS and
- * broadband RMS the way {@code src/lib/audioInput.js} does for a Web Audio
- * {@code AnalyserNode}.
+ * broadband RMS.
  *
  * <p>
  * A daemon thread continuously reads PCM frames and maintains the most recent

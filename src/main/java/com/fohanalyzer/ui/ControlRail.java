@@ -20,8 +20,7 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * The control rail (right panel). Ports the sections and handlers of
- * App.svelte.
+ * The control rail (right panel): every settings section and its handlers.
  */
 public final class ControlRail extends ScrollPane
 {

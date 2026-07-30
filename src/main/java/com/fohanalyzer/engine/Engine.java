@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Pure frequency math and the signal simulator. Direct port of
- * {@code src/lib/engine.js}. All methods are static and side-effect free.
+ * Pure frequency math and the signal simulator. All methods are static and
+ * side-effect free.
  */
 public final class Engine
 {

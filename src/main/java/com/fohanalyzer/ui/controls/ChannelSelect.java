@@ -17,8 +17,7 @@ import java.util.List;
 
 /**
  * Source selector: a button + popup of live inputs and simulated presets, plus
- * a channel stepper for multi-channel live devices. Port of
- * ChannelSelect.svelte.
+ * a channel stepper for multi-channel live devices.
  */
 public final class ChannelSelect extends VBox
 {

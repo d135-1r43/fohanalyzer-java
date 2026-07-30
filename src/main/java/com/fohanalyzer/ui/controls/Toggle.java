@@ -6,8 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 
 /**
- * A 38×22 on/off switch bound to a {@link BooleanProperty}. Port of
- * Toggle.svelte.
+ * A 38×22 on/off switch bound to a {@link BooleanProperty}.
  */
 public final class Toggle extends Region
 {

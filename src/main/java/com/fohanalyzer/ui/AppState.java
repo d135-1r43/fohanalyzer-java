@@ -12,8 +12,7 @@ import javafx.collections.ObservableList;
 import java.util.List;
 
 /**
- * All shared, observable application state — the Java equivalent of the
- * {@code $state} fields in App.svelte. The control rail mutates these; the
+ * All shared, observable application state. The control rail mutates these; the
  * analyzer view reads them.
  */
 public final class AppState

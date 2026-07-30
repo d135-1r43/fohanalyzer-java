@@ -4,8 +4,7 @@ import com.fohanalyzer.engine.Voice;
 
 /**
  * Per-band signal processing state: frame averaging, asymmetric (fast-attack /
- * slow-release) smoothing, and peak hold. Direct port of
- * {@code src/lib/signalState.js}.
+ * slow-release) smoothing, and peak hold.
  */
 public final class SignalState
 {

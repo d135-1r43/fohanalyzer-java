@@ -13,13 +13,12 @@ import javafx.scene.paint.Color;
 
 /**
  * The analyzer plot: a resizable {@link Canvas} driven by an
- * {@link AnimationTimer}. Port of {@code src/lib/AnalyzerCanvas.svelte}; reads
- * everything it needs from {@link AppState}.
+ * {@link AnimationTimer}. Reads everything it needs from {@link AppState}.
  */
 public final class AnalyzerView extends Region
 {
 
-	// ~45 Hz, matching the original setInterval(22)
+	// 22 ms, i.e. ~45 Hz
 	private static final double FRAME_SEC = 0.022;
 
 	private final AppState state;

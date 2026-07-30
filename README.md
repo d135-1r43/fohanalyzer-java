@@ -1,13 +1,9 @@
-# FOHanalyzer (Java / JavaFX)
+# FOHanalyzer
 
-A native desktop reimplementation of FOHanalyzer — a real-time
-dual-channel RTA (Real-Time Analyzer) for Front-of-House sound engineers. It overlays
-a **measurement-mic** trace (cyan) against a console **solo-bus** trace (amber) so you
-can compare room response to source signal, hunt feedback, verify EQ, and meter SPL.
-
-This is a faithful port of the original Svelte/Web-Audio app to **Java 21 + JavaFX**.
-The frequency math, signal processing, simulation engine, and on-screen rendering all
-match the original 1:1.
+A native desktop real-time dual-channel RTA (Real-Time Analyzer) for Front-of-House
+sound engineers, built on **Java 21 + JavaFX**. It overlays a **measurement-mic** trace
+(cyan) against a console **solo-bus** trace (amber) so you can compare room response to
+source signal, hunt feedback, verify EQ, and meter SPL.
 
 ## Install
 
@@ -50,9 +46,9 @@ mvn javafx:run
 mvn test
 ```
 
-The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`) port the original
-Vitest tests and verify parity of the band math, note naming, formatting, simulation,
-averaging/smoothing/peak-hold/voicing, and the spectral (FFT/band/RMS) logic.
+The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`) cover the band math,
+note naming, formatting, simulation, averaging/smoothing/peak-hold/voicing, and the
+spectral (FFT/band/RMS) logic.
 
 ## Code style
 
@@ -76,13 +72,13 @@ indent), and put a long comment on its own line above the statement rather than 
 
 ## Architecture
 
-| Package | Responsibility | Ported from |
-|---|---|---|
-| `engine` | Frequency math, note names, formatting, signal simulation | `lib/engine.js` |
-| `dsp` | Per-band averaging, smoothing, peak hold, stats | `lib/signalState.js` |
-| `audio` | Java Sound capture + TarsosDSP FFT (Web-Audio-equivalent) and pitch detection, device enumeration | `lib/audioInput.js` |
-| `ui` | JavaFX canvas rendering + render loop, app shell, control rail | `lib/draw.js`, `AnalyzerCanvas.svelte`, `App.svelte` |
-| `ui.controls` | Toggle, Segmented, Meter, SourceCard, ChannelSelect, Logo | the corresponding `.svelte` components |
+| Package | Responsibility |
+|---|---|
+| `engine` | Frequency math, note names, formatting, signal simulation |
+| `dsp` | Per-band averaging, smoothing, peak hold, stats |
+| `audio` | Java Sound capture + TarsosDSP FFT and pitch detection, device enumeration |
+| `ui` | JavaFX canvas rendering + render loop, app shell, control rail |
+| `ui.controls` | Toggle, Segmented, Meter, SourceCard, ChannelSelect, Logo |
 
 ### Audio capture
 
@@ -90,8 +86,7 @@ Live input is captured from a `javax.sound.sampled.TargetDataLine` on a daemon t
 into a 16384-sample ring buffer. Each frame, the latest window is Blackman-windowed and
 transformed with [TarsosDSP](https://github.com/JorenSix/TarsosDSP)
 (`be.tarsos.dsp.util.fft.FFT` + `BlackmanWindow`); per-bin magnitude is normalised by the
-FFT size and converted to dBFS — matching the browser's
-`AnalyserNode.getFloatFrequencyData`. Choose a live device per source from its dropdown;
+FFT size and converted to dBFS. Choose a live device per source from its dropdown;
 multi-channel interfaces expose a channel stepper. SPL metering (with calibration) appears
 when the measurement mic is a live input.
 
@@ -128,36 +123,33 @@ the newest audio and logs the actual ringing fundamental, rather than the band c
 peak markers round to. Four consecutive 2048-sample blocks are estimated independently and
 the median is logged, so one glitched block cannot shift the frequency you go on to notch.
 The suggested cut comes from how far the loudest band stands above the mic average. With a
-simulated mic, only the original *Inject feedback* practice mode is offered.
+simulated mic, only the *Inject feedback* practice mode is offered.
 
 ### Typography
 
-The web original styles everything with **IBM Plex Mono** (readouts, axis labels, badges)
-against **Saira** for UI text. A browser fetches those from Google Fonts; a desktop app
-cannot, so both families ship in `resources/com/fohanalyzer/fonts` (OFL-1.1, licences
+Readouts, axis labels, and badges are set in **IBM Plex Mono**; UI text is set in
+**Barlow**. Both families ship in `resources/com/fohanalyzer/fonts` (OFL-1.1, licences
 included) and `Fonts.install()` registers them with JavaFX before the stylesheet is applied.
 Without that step the app silently fell back to Helvetica Neue and Menlo.
 
-Saira is only published as a variable font, and JavaFX 21 cannot select an axis instance, so
-the UI sans is **Barlow** — the nearest static-face equivalent of Saira's squarish technical
-grotesque. Saira is kept next in the CSS stack for anyone who has it installed locally.
-Regular and Bold are bundled per family; the SemiBold (600) faces the web version uses are
-available upstream if the headings want a lighter weight.
+Barlow stands in for **Saira** — the squarish technical grotesque the design calls for —
+because Saira is only published as a variable font and JavaFX 21 cannot select an axis
+instance. Saira is kept next in the CSS stack for anyone who has it installed locally.
+Regular and Bold are bundled per family; the SemiBold (600) faces are available from the
+upstream font projects if the headings want a lighter weight.
 
-### Notes / differences from the web original
+### Implementation notes
 
-- Desktop window instead of a browser tab; no HTTPS/permission prompt needed.
-- Audio devices are enumerated once at launch (no browser `devicechange` event).
-- UI text is Barlow rather than Saira, for the variable-font reason above.
+- Audio devices are enumerated once at launch; there is no hot-plug notification.
 - The Blackman window comes from TarsosDSP, which uses the symmetric definition
-  (`cos(2πi/(N−1))`) where Web Audio uses the periodic one (`cos(2πi/N)`). At the 16384-point
-  window in use the two differ by ~1 part in 16k — far below the display resolution — and the
+  (`cos(2πi/(N−1))`) rather than the periodic one (`cos(2πi/N)`). At the 16384-point window
+  in use the two differ by ~1 part in 16k — far below the display resolution — and the
   spectral tests hold. The FFT itself is single- rather than double-precision for the same reason.
 - Broadband RMS stays hand-rolled: TarsosDSP's `SilenceDetector.soundPressureLevel` divides
-  energy by the buffer length instead of its square root, so it would not agree with the
-  browser RMS the SPL readout is calibrated against.
-- UI-component unit tests (Toggle/Segmented/Meter) are not ported — those controls are
-  trivial and JavaFX UI testing would add disproportionate setup. Core logic is fully tested.
+  energy by the buffer length instead of its square root, so it would not agree with the RMS
+  the SPL readout is calibrated against.
+- The UI components (Toggle/Segmented/Meter) have no unit tests — those controls are trivial
+  and JavaFX UI testing would add disproportionate setup. Core logic is fully tested.
 
 ### Packaging notes
 

@@ -12,10 +12,10 @@ import java.util.Map;
 /**
  * Pure, testable spectral math used by {@link AudioSource}, built on
  * <a href="https://github.com/JorenSix/TarsosDSP">TarsosDSP</a>.
- * {@link #spectrumDb} mirrors the browser's
- * {@code AnalyserNode.getFloatFrequencyData} (Blackman window, FFT, magnitude
- * normalised by FFT size, converted to dBFS); {@link #bands} and {@link #rmsDb}
- * port the band/RMS readers in {@code src/lib/audioInput.js}.
+ * {@link #spectrumDb} takes a time-domain window to a dBFS magnitude spectrum
+ * (Blackman window, FFT, magnitude normalised by FFT size, converted to dBFS);
+ * {@link #bands} and {@link #rmsDb} reduce that to per-band levels and a
+ * broadband RMS.
  */
 public final class AudioDsp
 {
@@ -46,8 +46,7 @@ public final class AudioDsp
 	 * Magnitude spectrum in dBFS for the given real time-domain window. Returns
 	 * {@code fftSize/2} bins (bin k centred at
 	 * {@code k * sampleRate / fftSize}). The window is copied and
-	 * Blackman-windowed (α = 0.16, as Web Audio defines it) before the
-	 * transform.
+	 * Blackman-windowed (α = 0.16) before the transform.
 	 */
 	public static double[] spectrumDb(float[] window)
 	{
@@ -78,8 +77,8 @@ public final class AudioDsp
 	}
 
 	/**
-	 * Reduce a dBFS spectrum to per-band peak levels, clamped to [-95, -2].
-	 * Direct port of {@code AudioSource.readBands}.
+	 * Reduce a dBFS spectrum to per-band peak levels, clamped to [-95, -2]. The
+	 * band-reading half of {@link AudioSource#readBands}.
 	 */
 	public static float[] bands(double[] specDb, double binHz, double[] centers, int frac)
 	{
@@ -105,14 +104,13 @@ public final class AudioDsp
 	}
 
 	/**
-	 * Broadband RMS of a time-domain window in dBFS (floor -144). Port of
-	 * {@code readRMS}.
+	 * Broadband RMS of a time-domain window in dBFS (floor -144). Backs
+	 * {@link AudioSource#readRMS}.
 	 *
 	 * <p>
 	 * Deliberately not TarsosDSP's {@code SilenceDetector.soundPressureLevel}:
 	 * that divides the energy by the buffer length instead of its square root,
-	 * so it does not agree with the browser's RMS the SPL readout is calibrated
-	 * against.
+	 * so it does not agree with the RMS the SPL readout is calibrated against.
 	 */
 	public static double rmsDb(float[] window)
 	{

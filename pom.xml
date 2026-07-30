@@ -9,7 +9,7 @@
   <version>2.3.1</version>
   <packaging>jar</packaging>
   <name>FOHanalyzer</name>
-  <description>Real-time dual-channel RTA for Front of House engineers (JavaFX port)</description>
+  <description>Real-time dual-channel RTA for Front of House engineers</description>
   <url>https://github.com/d135-1r43/fohanalyzer-java</url>
 
   <licenses>

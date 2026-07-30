@@ -1,4 +1,4 @@
-/* FOHanalyzer dark theme — ports the CSS custom properties from App.svelte. */
+/* FOHanalyzer dark theme — the shared colour and typography properties. */
 .root {
     -bg: #070a0f;
     -panel: #0d121b;
@@ -11,7 +11,7 @@
     -cyan: #22d3ee;
     -amber: #f5a524;
     -lime: #a3e635;
-    /* Bundled by Fonts.install(); Saira is the web original's choice, kept as a fallback
+    /* Bundled by Fonts.install(); Saira is what the design calls for, kept as a fallback
        for anyone who has it installed. */
     -fx-font-family: "Barlow", "Saira", "Helvetica Neue", sans-serif;
     -fx-background-color: -bg;

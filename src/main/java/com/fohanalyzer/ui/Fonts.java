@@ -34,8 +34,8 @@ public final class Fonts
 	public static final String MONO = pick("IBM Plex Mono", "Menlo", "Consolas", "DejaVu Sans Mono");
 
 	/**
-	 * UI family for labels and buttons. Barlow stands in for the web original's
-	 * Saira.
+	 * UI family for labels and buttons. Barlow stands in for Saira, which
+	 * JavaFX cannot instance from a variable font.
 	 */
 	public static final String SANS = pick("Barlow", "Saira", "Helvetica Neue");
 

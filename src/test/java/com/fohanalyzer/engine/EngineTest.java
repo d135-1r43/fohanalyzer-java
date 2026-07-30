@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import static com.fohanalyzer.engine.Engine.*;
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Port of src/lib/engine.test.js. */
+/** Frequency math, note naming, formatting, and the signal simulator. */
 class EngineTest
 {
 

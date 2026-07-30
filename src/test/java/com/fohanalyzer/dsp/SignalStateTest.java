@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/** Port of src/lib/signalState.test.js. */
+/** Band allocation, averaging, smoothing, peak hold, and voicing. */
 class SignalStateTest
 {
 

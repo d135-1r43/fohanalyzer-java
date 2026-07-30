@@ -7,8 +7,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.transform.Scale;
 
 /**
- * The little spectrum-bars logo. Port of Logo.svelte (40×40 artwork, scaled to
- * fit).
+ * The little spectrum-bars logo — 40×40 artwork, scaled to fit.
  */
 public final class Logo extends Pane
 {

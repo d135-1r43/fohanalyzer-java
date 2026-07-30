@@ -5,8 +5,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 
 /**
- * Thin horizontal level meter. Maps dBFS in [-90, -6] to a 0–100% fill. Port of
- * Meter.svelte.
+ * Thin horizontal level meter. Maps dBFS in [-90, -6] to a 0–100% fill.
  */
 public final class Meter extends StackPane
 {

@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * A source panel: indicator dot, name, on/off toggle, channel selector, level
- * meter, and a marker-select pill. Port of SourceCard.svelte.
+ * meter, and a marker-select pill.
  */
 public final class SourceCard extends VBox
 {

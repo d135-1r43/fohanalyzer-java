@@ -9,8 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Enumerates audio capture devices. Replaces the browser's
- * {@code enumerateDevices}.
+ * Enumerates the audio capture devices the host machine offers.
  */
 public final class AudioInputs
 {

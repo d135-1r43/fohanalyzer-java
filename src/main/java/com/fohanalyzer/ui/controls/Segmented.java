@@ -11,7 +11,6 @@ import java.util.Map;
 
 /**
  * A segmented (radio-button row) control bound to an {@link IntegerProperty}.
- * Port of Segmented.svelte.
  */
 public final class Segmented extends HBox
 {
