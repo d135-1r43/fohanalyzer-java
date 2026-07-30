@@ -39,7 +39,7 @@ public final class ControlRail extends ScrollPane
 	{
 		this.state = state;
 		this.settings = settings;
-		this.preferences = new PreferencesWindow(state);
+		this.preferences = new PreferencesWindow(state, settings);
 		getStyleClass().add("scroll-pane");
 		setFitToWidth(true);
 		setHbarPolicy(ScrollBarPolicy.NEVER);

@@ -3,6 +3,7 @@ package com.fohanalyzer.ui;
 import com.fohanalyzer.audio.AudioDevice;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;
@@ -96,6 +97,70 @@ class SettingsTest
 		assertEquals(defaults.avgN.get(), st.avgN.get());
 		assertEquals(defaults.smoothing.get(), st.smoothing.get(), 1e-9);
 		assertEquals(defaults.markerSource.get(), st.markerSource.get());
+	}
+
+	@Nested
+	class PrefsWindowBounds
+	{
+		@Test
+		void roundTripsWhatWasStored()
+		{
+			settings.putPrefsWindow(120, 80, 500, 640);
+
+			Settings.WindowBounds b = new Settings(node).prefsWindow();
+			assertNotNull(b);
+			assertEquals(120, b.x(), 1e-9);
+			assertEquals(80, b.y(), 1e-9);
+			assertEquals(500, b.w(), 1e-9);
+			assertEquals(640, b.h(), 1e-9);
+		}
+
+		@Test
+		void nothingStoredMeansNoBounds()
+		{
+			assertNull(settings.prefsWindow(), "a first run should fall back to the default size");
+		}
+
+		@Test
+		void anUnusableStoredSizeIsIgnored()
+		{
+			// Hand-edited or written by a build that allowed it: too small to
+			// show the controls, so the default is the better answer.
+			node.putDouble("prefsWinX", 100);
+			node.putDouble("prefsWinY", 100);
+			node.putDouble("prefsWinW", 40);
+			node.putDouble("prefsWinH", 30);
+
+			assertNull(settings.prefsWindow());
+		}
+
+		@Test
+		void aPartialRecordIsIgnored()
+		{
+			// Size but no position — all four or nothing.
+			node.putDouble("prefsWinW", 500);
+			node.putDouble("prefsWinH", 640);
+
+			assertNull(settings.prefsWindow());
+		}
+
+		@Test
+		void nonsenseIsNeverWritten()
+		{
+			settings.putPrefsWindow(Double.NaN, 0, 500, 640);
+			settings.putPrefsWindow(0, 0, Double.POSITIVE_INFINITY, 640);
+
+			assertNull(settings.prefsWindow());
+		}
+
+		@Test
+		void resetForgetsTheWindowToo()
+		{
+			settings.putPrefsWindow(120, 80, 500, 640);
+			settings.reset(new AppState());
+
+			assertNull(settings.prefsWindow());
+		}
 	}
 
 	@Test

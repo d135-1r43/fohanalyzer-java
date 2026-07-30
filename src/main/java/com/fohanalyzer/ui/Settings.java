@@ -35,6 +35,16 @@ public final class Settings
 	private static final String MARKERS = "markers";
 	private static final String MARKER_SOURCE = "markerSource";
 	private static final String SHOW_TRANSFER = "showTransfer";
+	private static final String PREFS_X = "prefsWinX";
+	private static final String PREFS_Y = "prefsWinY";
+	private static final String PREFS_W = "prefsWinW";
+	private static final String PREFS_H = "prefsWinH";
+
+	/**
+	 * A window smaller than this cannot show its controls; larger is absurd.
+	 */
+	private static final double MIN_WIN = 320;
+	private static final double MAX_WIN = 10000;
 
 	/**
 	 * Values the Resolution / Averaging segmented controls can actually
@@ -123,6 +133,50 @@ public final class Settings
 		{
 			System.err.println("[settings] could not clear: " + e.getMessage());
 		}
+	}
+
+	// ---- window geometry --------------------------------------------------
+
+	/** Where a window was last left. All four values or none. */
+	public record WindowBounds(double x, double y, double w, double h)
+	{
+	}
+
+	/**
+	 * Bounds of the preferences window, or {@code null} when nothing usable is
+	 * stored.
+	 *
+	 * <p>
+	 * A stored size outside {@link #MIN_WIN} … {@link #MAX_WIN} is treated as
+	 * nothing stored: the window would open unusably small or absurdly large,
+	 * and the default is a better answer than honouring it. Whether the
+	 * position is still on a screen is the caller's business — this class has
+	 * no view of the displays.
+	 */
+	public WindowBounds prefsWindow()
+	{
+		double w = prefs.getDouble(PREFS_W, Double.NaN);
+		double h = prefs.getDouble(PREFS_H, Double.NaN);
+		double x = prefs.getDouble(PREFS_X, Double.NaN);
+		double y = prefs.getDouble(PREFS_Y, Double.NaN);
+		if (!Double.isFinite(x) || !Double.isFinite(y)) return null;
+		if (!inRange(w) || !inRange(h)) return null;
+		return new WindowBounds(x, y, w, h);
+	}
+
+	/** Remembers where the preferences window was left. */
+	public void putPrefsWindow(double x, double y, double w, double h)
+	{
+		if (!Double.isFinite(x) || !Double.isFinite(y) || !inRange(w) || !inRange(h)) return;
+		prefs.putDouble(PREFS_X, x);
+		prefs.putDouble(PREFS_Y, y);
+		prefs.putDouble(PREFS_W, w);
+		prefs.putDouble(PREFS_H, h);
+	}
+
+	private static boolean inRange(double v)
+	{
+		return Double.isFinite(v) && v >= MIN_WIN && v <= MAX_WIN;
 	}
 
 	// ---- restore ----------------------------------------------------------

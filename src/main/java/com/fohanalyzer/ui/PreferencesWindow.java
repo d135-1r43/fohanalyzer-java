@@ -12,6 +12,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
@@ -31,12 +32,17 @@ import java.util.Locale;
 public final class PreferencesWindow
 {
 
+	private static final double DEFAULT_W = 420;
+	private static final double DEFAULT_H = 520;
+
 	private final AppState state;
+	private final Settings settings;
 	private Stage stage;
 
-	public PreferencesWindow(AppState state)
+	public PreferencesWindow(AppState state, Settings settings)
 	{
 		this.state = state;
+		this.settings = settings;
 	}
 
 	/** Opens the window, or brings it forward if it is already up. */
@@ -49,7 +55,7 @@ public final class PreferencesWindow
 			return;
 		}
 
-		Scene scene = new Scene(buildRoot(), 420, 520, Color.web("#070a0f"));
+		Scene scene = new Scene(buildRoot(), DEFAULT_W, DEFAULT_H, Color.web("#070a0f"));
 		scene.getStylesheets().add(
 			MainApp.class.getResource("/com/fohanalyzer/theme.css").toExternalForm());
 
@@ -58,8 +64,49 @@ public final class PreferencesWindow
 		stage.initOwner(owner);
 		stage.initModality(Modality.NONE);
 		stage.setScene(scene);
-		stage.setOnHidden(e -> stage = null);
+		stage.setMinWidth(DEFAULT_W);
+		stage.setMinHeight(360);
+
+		// Restore onto the stage, not the scene: what was saved is the outer
+		// window, and a scene is the inner area. Feeding one into the other
+		// adds the title bar again every launch, and the window creeps taller.
+		Settings.WindowBounds saved = settings.prefsWindow();
+		if (saved != null)
+		{
+			stage.setWidth(saved.w());
+			stage.setHeight(saved.h());
+			if (onAScreen(saved))
+			{
+				stage.setX(saved.x());
+				stage.setY(saved.y());
+			}
+		}
+
+		// Written as they change and flushed when the window goes away — a drag
+		// fires these continuously, and flushing each frame would be silly.
+		Runnable remember = () -> settings.putPrefsWindow(
+			stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight());
+		stage.xProperty().addListener((o, a, b) -> remember.run());
+		stage.yProperty().addListener((o, a, b) -> remember.run());
+		stage.widthProperty().addListener((o, a, b) -> remember.run());
+		stage.heightProperty().addListener((o, a, b) -> remember.run());
+		stage.setOnHidden(e -> {
+			remember.run();
+			settings.flush();
+			stage = null;
+		});
 		stage.show();
+	}
+
+	/**
+	 * Whether the stored position still lands on a display. A window remembered
+	 * on a second monitor would otherwise reopen off in space when that monitor
+	 * is gone, which is the normal case for a laptop that gets carried to a
+	 * different rig.
+	 */
+	private static boolean onAScreen(Settings.WindowBounds b)
+	{
+		return !Screen.getScreensForRectangle(b.x(), b.y(), b.w(), b.h()).isEmpty();
 	}
 
 	/**
