@@ -12,6 +12,18 @@
   <description>Real-time dual-channel RTA for Front of House engineers</description>
   <url>https://github.com/d135-1r43/fohanalyzer-java</url>
 
+  <!--
+    developerConnection is SSH because release:prepare has to push the tag and the two
+    version commits; connection stays HTTPS so a read-only checkout needs no key. The tag
+    element is a placeholder the release plugin rewrites and then resets to HEAD.
+  -->
+  <scm>
+    <connection>scm:git:https://github.com/d135-1r43/fohanalyzer-java.git</connection>
+    <developerConnection>scm:git:git@github.com:d135-1r43/fohanalyzer-java.git</developerConnection>
+    <url>https://github.com/d135-1r43/fohanalyzer-java</url>
+    <tag>HEAD</tag>
+  </scm>
+
   <licenses>
     <license>
       <name>GNU General Public License v3.0 or later</name>
