@@ -1,9 +1,44 @@
-# FOHanalyzer
+<p align="center">
+  <img src="docs/logo.png" alt="" width="112">
+</p>
 
-A native desktop real-time dual-channel RTA (Real-Time Analyzer) for Front-of-House
-sound engineers, built on **Java 21 + JavaFX**. It overlays a **measurement-mic** trace
-(cyan) against a console **solo-bus** trace (amber) so you can compare room response to
-source signal, hunt feedback, verify EQ, and meter SPL.
+<h1 align="center">FOHanalyzer</h1>
+
+<p align="center">
+  A native desktop dual-channel RTA for Front-of-House sound engineers.<br>
+  Overlay a <b>measurement mic</b> against the console <b>solo bus</b> — read the room,
+  hunt feedback, verify EQ, meter SPL.
+</p>
+
+<p align="center">
+  <a href="https://github.com/d135-1r43/fohanalyzer-java/actions/workflows/build.yml">
+    <img src="https://github.com/d135-1r43/fohanalyzer-java/actions/workflows/build.yml/badge.svg" alt="Build status">
+  </a>
+  <img src="https://img.shields.io/badge/Java-21%2B-orange" alt="Java 21+">
+  <img src="https://img.shields.io/badge/UI-JavaFX-blue" alt="JavaFX">
+  <img src="https://img.shields.io/badge/licence-GPL--3.0--or--later-green" alt="GPL-3.0-or-later">
+</p>
+
+<p align="center">
+  <img src="docs/screenshot.png" alt="The analyzer window: dual spectrum plot with the control rail" width="100%">
+</p>
+
+## What it does
+
+- **Two traces, one plot.** A measurement-mic trace (cyan) over a console solo-bus trace
+  (amber), so room response and source signal are read against each other rather than in
+  turn.
+- **Ring-out assist.** With a live mic, *Detect ring* reports the actual ringing
+  fundamental — not the band centre a peak marker rounds to — and suggests a cut. With a
+  simulated mic, *Inject feedback* is a practice mode for the same workflow.
+- **SPL metering.** Calibrate against a known reference level and the readout is real dB
+  SPL rather than dBFS.
+- **Peak hold, peak markers, transfer function.** Overlays for the mic−solo difference and
+  for what the plot did while you were not looking.
+- **Reference capture.** A dashed ghost of both traces, to A/B before against after EQ.
+- **1/1 to 1/24 octave** resolution, with smoothing and frame averaging.
+- **Runs on real hardware or simulated presets** — the simulator means the whole app is
+  usable without an interface plugged in.
 
 ## Install
 
@@ -17,40 +52,32 @@ measurement mic and console feeds, and without it the analyser has nothing to re
 > first launch: right-click the app and choose **Open** to allow it. A Developer ID
 > signature and notarisation would remove that step.
 
-### Building the bundle yourself
+## Development
+
+Needs **JDK 21+** (built and tested on Temurin 25) and **Maven 3.9+**.
+
+```bash
+mvn javafx:run   # run
+mvn test         # test
+```
+
+The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`, `SettingsTest`) cover the
+band math, note naming, formatting, simulation, averaging/smoothing/peak-hold/voicing, the
+spectral (FFT/band/RMS) logic, and the settings store.
+
+### Building the bundle
 
 ```bash
 ./scripts/package-mac.sh            # target/dist/FOHanalyzer-<version>.dmg
 ./scripts/package-mac.sh app-image  # just the .app — faster when iterating
 ```
 
-Needs a JDK with `jpackage` (21+; built on Temurin 25) and Maven. The script collects the
-runtime jars, renders the icon from the in-app logo via
-`com.fohanalyzer.dev.IconRenderer`, and runs `jpackage`. See
-[Packaging notes](#packaging-notes) for why it looks the way it does.
+Needs a JDK with `jpackage`. The script collects the runtime jars, renders the icon from the
+in-app logo via `com.fohanalyzer.dev.IconRenderer`, and runs `jpackage`. See
+[Packaging notes](#packaging-notes) for why it looks the way it does. CI runs the same script
+on every push and attaches the `.dmg`; a semver tag publishes it as a release.
 
-## Requirements (development)
-
-- JDK 21+ (built/tested on Temurin 25)
-- Maven 3.9+
-
-## Run
-
-```bash
-mvn javafx:run
-```
-
-## Test
-
-```bash
-mvn test
-```
-
-The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`) cover the band math,
-note naming, formatting, simulation, averaging/smoothing/peak-hold/voicing, and the
-spectral (FFT/band/RMS) logic.
-
-## Code style
+### Code style
 
 The style is the Eclipse formatter profile in [`formatter/java.xml`](formatter/java.xml),
 shared with the `nuusroom` project so both use one house style: tabs at width 4, braces on
@@ -70,31 +97,37 @@ wrapped for a wider margin ends up ragged, and an over-long trailing comment tur
 deeply indented staircase. Keep `//` lines inside the 80-column budget (counting the tab
 indent), and put a long comment on its own line above the statement rather than trailing it.
 
-## Architecture
+## How it works
 
 | Package | Responsibility |
 |---|---|
 | `engine` | Frequency math, note names, formatting, signal simulation |
 | `dsp` | Per-band averaging, smoothing, peak hold, stats |
 | `audio` | Java Sound capture + TarsosDSP FFT and pitch detection, device enumeration |
-| `ui` | JavaFX canvas rendering + render loop, app shell, control rail |
+| `ui` | JavaFX canvas rendering + render loop, app shell, control rail, preferences |
 | `ui.controls` | Toggle, Segmented, Meter, SourceCard, ChannelSelect, Logo |
+
+| Dependency | For | Licence |
+|---|---|---|
+| [JavaFX](https://openjfx.io) | UI toolkit and canvas | GPLv2 + Classpath Exception |
+| [TarsosDSP](https://github.com/JorenSix/TarsosDSP) `core` | FFT, window functions, YIN pitch detection | **GPL-3.0** |
+| [SLF4J](https://www.slf4j.org) api + simple | Logging | MIT |
+| JUnit 5 | Tests only | EPL-2.0 |
 
 ### Audio capture
 
 Live input is captured from a `javax.sound.sampled.TargetDataLine` on a daemon thread
 into a 16384-sample ring buffer. Each frame, the latest window is Blackman-windowed and
-transformed with [TarsosDSP](https://github.com/JorenSix/TarsosDSP)
-(`be.tarsos.dsp.util.fft.FFT` + `BlackmanWindow`); per-bin magnitude is normalised by the
-FFT size and converted to dBFS. Choose a live device per source in *Preferences*;
-multi-channel interfaces expose a channel stepper there. The rail keeps a read-only line
-naming what each source is set to. SPL metering appears when the measurement mic is a live
-input, and is calibrated from *Preferences* too.
+transformed with TarsosDSP (`be.tarsos.dsp.util.fft.FFT` + `BlackmanWindow`); per-bin
+magnitude is normalised by the FFT size and converted to dBFS. Choose a live device per
+source in *Preferences*; multi-channel interfaces expose a channel stepper there. The rail
+keeps a read-only line naming what each source is set to. SPL metering appears when the
+measurement mic is a live input, and is calibrated from *Preferences* too.
 
 TarsosDSP is not on Maven Central; the POM adds the author's repository
 (`https://mvn.0110.be/releases`) and pulls `be.tarsos.dsp:core`, which has no transitive
 dependencies. **It is GPL-3.0**, which is stricter than the rest of this project's
-dependency set — relevant if the app is ever distributed.
+dependency set and is what fixes the licence below.
 
 Only the `core` module is used. The `jvm` module's `AudioDispatcher` is deliberately not
 used for capture: it consumes a mono stream, which would give up the per-channel selection
@@ -114,6 +147,10 @@ working, even though the answer is only *set* once. Nothing in that window is a 
 step: the controls bind straight to the shared state that is persisted anyway, so there is
 no OK/Cancel and nothing to apply.
 
+<p align="center">
+  <img src="docs/preferences.png" alt="The preferences window: source pickers and SPL calibration" width="380">
+</p>
+
 ### Saved settings
 
 SPL calibration, the selected inputs and channels, and the analysis/view options persist
@@ -130,6 +167,12 @@ moving between rigs is the normal case, so a missing device quietly leaves the s
 preset selected instead of pointing at a line that cannot be opened. A channel index saved
 against an 18-in interface is clamped when it reopens on a 2-in one. *Reset saved settings*
 at the foot of the rail clears everything back to defaults.
+
+The preferences window remembers its own size and position, restored onto the stage rather
+than the scene — the saved height is the outer window and includes the title bar, so
+feeding it back into the scene would add that bar again on every launch. A position that no
+longer lands on any display is ignored, which is the normal case for a laptop carried
+between rigs.
 
 ### Ring-out assist
 
@@ -152,6 +195,18 @@ because Saira is only published as a variable font and JavaFX 21 cannot select a
 instance. Saira is kept next in the CSS stack for anyone who has it installed locally.
 Regular and Bold are bundled per family; the SemiBold (600) faces are available from the
 upstream font projects if the headings want a lighter weight.
+
+### Version and logging
+
+The version in the header chip and the rail footer is read from the jar manifest's
+`Implementation-Version`, which `maven-jar-plugin` writes from the POM, so what is on screen
+cannot drift from what the build stamped on the bundle. A run straight from `target/classes`
+has no manifest and reports `dev`.
+
+Logging goes through SLF4J with the `simple` binding — this app writes a handful of warnings
+and dev-aid lines, so a full backend buys nothing, and both artifacts are MIT rather than
+adding another licence to reconcile. `simplelogger.properties` trims the output to level,
+short class name, and message.
 
 ### Implementation notes
 
@@ -190,9 +245,13 @@ Two macOS specifics the script handles:
   and arm64 macOS will not launch an unsigned bundle, so the script re-signs ad-hoc
   afterwards.
 
+`jpackage` also takes only a numeric `X[.Y[.Z]]` app version and rejects a `-SNAPSHOT`
+suffix, so the script hands it the stripped number and renames the `.dmg` back afterwards —
+the file still says which build it came from.
+
 The icon is rendered from the same `Logo` vector used in the header, at every size
 `iconutil` wants, rather than downscaled from one bitmap — the bars are thin and resampling
-turns the 16px variant to mush.
+turns the 16px variant to mush. It is also where [`docs/logo.png`](docs/logo.png) comes from.
 
 ### Dev aids
 
@@ -208,7 +267,8 @@ cache instead of relying on undocumented invalidation.
 
 **Render probe.** `PROBE=true mvn javafx:run` boots the app, snapshots the window to
 `target/probe-full.png` after ~2 s, and exits — handy for headless visual checks. Pass a
-number for a longer delay (`PROBE=20`), e.g. to snapshot *after* a hot reload.
+number for a longer delay (`PROBE=20`), e.g. to snapshot *after* a hot reload. The screenshot
+at the top of this file is one of these.
 
 ## Licence
 
