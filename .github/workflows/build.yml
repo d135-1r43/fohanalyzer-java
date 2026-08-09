@@ -32,6 +32,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The release notes are built from `git log` between tags, which needs the history
+          # and the tags — the default shallow, tagless checkout cannot see either.
+          fetch-depth: 0
 
       # Also what the project targets: release 25, the current LTS.
       - uses: actions/setup-java@v5
@@ -77,13 +81,55 @@ jobs:
           path: target/dist/*.dmg
           if-no-files-found: error
 
-      # Created as a draft: the notes are generated from commit history, so they are worth
-      # reading once before anyone can download them. Publish from the Releases page.
+      # Notes are the install preamble plus a changelog built from `git log`.
       #
-      # --notes is prepended to --generate-notes rather than replacing it, so the install
-      # note stays above the generated changelog. The Gatekeeper wording matters: macOS 15
-      # removed the right-click-Open shortcut every older guide describes, so telling people
-      # to use it would read as the app being broken.
+      # Deliberately NOT --generate-notes: that calls GitHub's Release Notes API, which lists
+      # merged pull requests. Work here lands as direct commits to master, so the only PRs in
+      # the history are Dependabot's — 2.4.0 was first published listing four dependency
+      # bumps and none of the actual features. Commits are the real record.
+      #
+      # Created as a draft so the changelog can be read before anyone can download it;
+      # publish from the Releases page.
+      - name: Build the release notes
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # Previous tag reachable from this one, if any; empty for the first release.
+          prev="$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || true)"
+          if [ -n "$prev" ]; then
+            range="$prev..$GITHUB_REF_NAME"
+            echo "changelog range: $range"
+          else
+            range="$GITHUB_REF_NAME"
+            echo "no previous tag — logging the whole history"
+          fi
+
+          # Oldest first, and drop the release plugin's own version commits: they say nothing
+          # a reader wants and they would top every list. Can legitimately come out empty —
+          # a release cut immediately after the previous one has only those commits.
+          changes="$(git log --reverse --format='- %s' "$range" \
+            | grep -v '^- \[maven-release-plugin\]' || true)"
+
+          {
+            cat .github/release-preamble.md
+            echo
+            echo "## Changes"
+            echo
+            if [ -n "$changes" ]; then
+              echo "$changes"
+            else
+              echo "_No functional changes since the previous release._"
+            fi
+            echo
+            if [ -n "$prev" ]; then
+              echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${prev}...${GITHUB_REF_NAME}"
+            else
+              echo "**Full history**: https://github.com/${GITHUB_REPOSITORY}/commits/${GITHUB_REF_NAME}"
+            fi
+          } > target/release-notes.md
+
+          echo "--- notes ---"
+          cat target/release-notes.md
+
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -92,16 +138,5 @@ jobs:
           gh release create "$GITHUB_REF_NAME" \
             --title "FOHanalyzer ${{ steps.pom.outputs.version }}" \
             --draft \
-            --generate-notes \
-            --notes "Built for Apple silicon. Drag FOHanalyzer to Applications — it ships
-          its own Java runtime, so no JDK is needed.
-
-          The bundle is ad-hoc signed and not notarised, so Gatekeeper refuses the first
-          launch. Either clear the quarantine flag:
-
-              xattr -dr com.apple.quarantine /Applications/FOHanalyzer.app
-
-          or open it once and press **Open Anyway** in **System Settings → Privacy &
-          Security**. On macOS 15 and later those are the only two routes — the older
-          right-click-Open shortcut no longer exists." \
+            --notes-file target/release-notes.md \
             target/dist/*.dmg
