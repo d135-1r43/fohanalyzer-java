@@ -96,7 +96,7 @@ public final class Settings
 		}
 		catch (BackingStoreException e)
 		{
-			log.warn("could not flush settings: {}", e.getMessage());
+			log.warn("could not flush settings", e);
 		}
 	}
 
@@ -136,7 +136,7 @@ public final class Settings
 		}
 		catch (BackingStoreException e)
 		{
-			log.warn("could not clear settings: {}", e.getMessage());
+			log.warn("could not clear settings", e);
 		}
 	}
 

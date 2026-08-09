@@ -92,7 +92,7 @@ public final class CssWatcher
 		}
 		catch (IOException e)
 		{
-			log.info("CSS watch stopped: {}", e.toString());
+			log.info("CSS watch stopped", e);
 		}
 	}
 
@@ -119,7 +119,7 @@ public final class CssWatcher
 		}
 		catch (IOException e)
 		{
-			log.warn("reload failed: {}", e.toString());
+			log.warn("reload failed", e);
 		}
 	}
 }

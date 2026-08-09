@@ -3,6 +3,8 @@ package com.fohanalyzer.ui;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
 
@@ -18,6 +20,8 @@ import java.io.InputStream;
  */
 public final class Fonts
 {
+	private static final Logger log = LoggerFactory.getLogger(Fonts.class);
+
 	private static final String FONT_DIR = "/com/fohanalyzer/fonts/";
 
 	private static final String[] BUNDLED = {
@@ -56,14 +60,19 @@ public final class Fonts
 	{
 		for (String file : BUNDLED)
 		{
+			// These ship inside the jar, so a face that will not load is a
+			// broken build rather than a missing system font. The app still
+			// runs — pick() falls through to the next family — but it will not
+			// look right, and silently drawing in Helvetica is worse than
+			// saying so.
 			try (InputStream in = Fonts.class.getResourceAsStream(FONT_DIR + file))
 			{
-				if (in != null) Font.loadFont(in, 12);
+				if (in == null) log.warn("bundled font missing: {}", file);
+				else if (Font.loadFont(in, 12) == null) log.warn("bundled font unreadable: {}", file);
 			}
-			catch (Exception ignored)
+			catch (Exception e)
 			{
-				// A missing or unreadable face just falls back to the next
-				// family below.
+				log.warn("bundled font {} failed to load", file, e);
 			}
 		}
 	}

@@ -1,5 +1,8 @@
 package com.fohanalyzer.audio;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.DataLine;
@@ -18,6 +21,8 @@ import javax.sound.sampled.TargetDataLine;
  */
 public final class AudioSource
 {
+	private static final Logger log = LoggerFactory.getLogger(AudioSource.class);
+
 	public static final int FFT_SIZE = 16384;
 	private static final float TARGET_RATE = 48000f;
 
@@ -144,10 +149,21 @@ public final class AudioSource
 			captureThread = new Thread(() -> captureLoop(format), "audio-capture");
 			captureThread.setDaemon(true);
 			captureThread.start();
+
+			// What was opened, once per connect. Which channel of how many, at
+			// what rate, is the first thing worth knowing when a trace looks
+			// wrong, and it is not visible anywhere else.
+			log.info("capturing {} ch {}{} of {} at {} Hz", device.label(),
+				this.channelIndex + 1, stereo ? "-" + (this.channelIndex + 2) : "",
+				channelCount, (int)sampleRate);
 		}
 		catch (Exception e)
 		{
+			// Kept in `error` for a caller that wants to show it, but logged
+			// here too: a device that refuses to open otherwise fails in total
+			// silence and the plot just stays simulated.
 			error = e.getMessage();
+			log.warn("cannot capture {}", device.label(), e);
 			disconnect();
 		}
 		return channelCount;
@@ -272,9 +288,15 @@ public final class AudioSource
 				}
 			}
 		}
-		catch (Exception ignored)
+		catch (Exception e)
 		{
-			// line closed underneath us — exit quietly
+			// disconnect() closes the line under this thread on purpose, and
+			// the read then throws — expected, so it is only worth a line at
+			// debug. Still running means the device went away on its own,
+			// which the capture silently stopping would otherwise hide.
+			if (running) log.warn("capture stopped unexpectedly", e);
+			else
+				log.debug("capture thread ended after close", e);
 		}
 	}
 
