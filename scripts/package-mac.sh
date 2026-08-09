@@ -24,6 +24,41 @@ APP="$DIST/$APP_NAME.app"
 # there is no audio capture at all — and java.prefs backs the saved settings.
 JDK_MODULES="java.base,java.desktop,java.logging,java.prefs,java.xml,jdk.unsupported"
 
+# Both steps below need a JDK at least as new as maven.compiler.release in pom.xml, and
+# neither says so clearly when it is missing. jpackage stamps whichever runtime it is run
+# from into the bundle, so an older one yields an .app whose JVM cannot load the very classes
+# it ships. The icon render is worse: `mvn javafx:run` reads the JavaFX jars in-process, in
+# the JVM running Maven, and an older JVM cannot parse their class files at all — it drops
+# them and reports only "--add-modules requires modules to be specified". The pom's toolchain
+# does not cover either case; it feeds the compiler and the test JVM, not the Maven JVM.
+REQUIRED_JDK=25
+
+# Leading integer of a version banner: "openjdk 25.0.3 ..." and "25.0.3" both give 25.
+jdk_major()
+{
+	sed -n 's/^[^0-9]*\([0-9][0-9]*\).*/\1/p' <<<"$1" | head -1
+}
+
+require_jdk()
+{
+	local what="$1" reported="$2" major
+	major="$(jdk_major "$reported")"
+	if [ -z "$major" ] || [ "$major" -lt "$REQUIRED_JDK" ]; then
+		echo "error: $what reports '${reported:-nothing}', but JDK $REQUIRED_JDK or newer is required." >&2
+		echo "       export JAVA_HOME=\$(/usr/libexec/java_home -v $REQUIRED_JDK)" >&2
+		exit 1
+	fi
+}
+
+command -v jpackage >/dev/null 2>&1 || {
+	echo "error: jpackage is not on PATH; it ships with the JDK." >&2
+	exit 1
+}
+require_jdk "jpackage" "$(jpackage --version 2>&1 | head -1)"
+# Ask Maven which JVM it runs on rather than checking `java`: Maven prefers JAVA_HOME, so the
+# two can disagree, and it is Maven's JVM that renders the icon.
+require_jdk "the JVM running Maven" "$(mvn -v 2>/dev/null | sed -n 's/^Java version: \([^,]*\).*/\1/p')"
+
 VERSION="$(mvn -B -q help:evaluate -Dexpression=project.version -DforceStdout)"
 JAR="fohanalyzer-java-${VERSION}.jar"
 

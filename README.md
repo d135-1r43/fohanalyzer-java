@@ -61,6 +61,16 @@ mvn javafx:run   # run
 mvn test         # test
 ```
 
+`mvn test` and `mvn package` work even when `JAVA_HOME` points at an older JDK: the pom
+selects an installed JDK 25+ as a toolchain and hands it to the compiler and the test JVM.
+Running and packaging the app are not covered — `mvn javafx:run` reads the JavaFX jars inside
+the JVM running Maven, and `jpackage` bundles whichever runtime it is invoked from — so for
+those, put `JAVA_HOME` on 25 yourself:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 25)   # macOS
+```
+
 The JUnit suites (`EngineTest`, `SignalStateTest`, `AudioDspTest`, `SettingsTest`) cover the
 band math, note naming, formatting, simulation, averaging/smoothing/peak-hold/voicing, the
 spectral (FFT/band/RMS) logic, and the settings store.
@@ -72,7 +82,9 @@ spectral (FFT/band/RMS) logic, and the settings store.
 ./scripts/package-mac.sh app-image  # just the .app — faster when iterating
 ```
 
-Needs a JDK with `jpackage`. The script collects the runtime jars, renders the icon from the
+Needs `JAVA_HOME` on JDK 25+; the script checks both `jpackage` and Maven's own JVM up front
+and stops with the fix rather than producing a bundle that cannot load its own classes. The
+script collects the runtime jars, renders the icon from the
 in-app logo via `com.fohanalyzer.dev.IconRenderer`, and runs `jpackage`. See
 [Packaging notes](#packaging-notes) for why it looks the way it does. CI runs the same script
 on every push and attaches the `.dmg`; a semver tag publishes it as a release.

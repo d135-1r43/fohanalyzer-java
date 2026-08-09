@@ -41,6 +41,7 @@
     <slf4j.version>2.0.18</slf4j.version>
     <formatter.plugin.version>2.29.0</formatter.plugin.version>
     <release.plugin.version>3.3.1</release.plugin.version>
+    <toolchains.plugin.version>3.3.0</toolchains.plugin.version>
     <app.mainClass>com.fohanalyzer.Main</app.mainClass>
   </properties>
 
@@ -105,6 +106,42 @@
 
   <build>
     <plugins>
+      <!--
+        maven.compiler.release above is 25, so javac has to be at least 25 — but that is the
+        JDK Maven itself was launched with, i.e. whatever JAVA_HOME happens to point at. A
+        shell defaulting to an older JDK fails the build outright with "release version 25
+        not supported". This goal picks a JDK >= 25 from the ones installed on the machine
+        and hands it to the compiler and to surefire's forked test JVM, so a plain `mvn test`
+        works regardless of JAVA_HOME.
+
+        Discovery is the plugin's built-in heuristic (discoverToolchains defaults to true),
+        which searches the usual per-platform install locations, so no toolchains.xml is
+        needed. The range is open-ended rather than pinned to 25 so a newer JDK also
+        satisfies it; the default comparator prefers an LTS, so 25 wins over 26 when both
+        are present. useJdk defaults to IfMatch, meaning no separate process is forked when
+        the running JDK already qualifies — on CI, where setup-java provides 25, this is a
+        no-op.
+
+        It does not cover `mvn javafx:run`, and cannot: that goal honours the toolchain for
+        the JVM it forks, but it also reads the JavaFX jars in-process, in the JVM running
+        Maven, which fails on anything older than those jars. Running or packaging the app
+        needs JAVA_HOME itself on 25 — scripts/package-mac.sh checks for that up front.
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>${toolchains.plugin.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>select-jdk-toolchain</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <version>[25,)</version>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
