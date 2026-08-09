@@ -65,6 +65,23 @@ public final class Draw
 		g.fillRoundRect(x, y, w, h, r * 2, r * 2);
 	}
 
+	/**
+	 * Pins a label box's left edge inside the plot: {@code preferred} clamped
+	 * to {@code [lo, hi]}, where {@code hi} is the rightmost edge that still
+	 * leaves room for the box.
+	 *
+	 * <p>
+	 * A label wider than the space between the axes inverts the two bounds, and
+	 * {@link Math#clamp} rejects that with {@link IllegalArgumentException} — a
+	 * per-frame throw in the render loop if the window is ever dragged that
+	 * narrow. The left margin wins in that case, so the box starts at the axis
+	 * and overflows to the right rather than being pushed off it.
+	 */
+	private static double pinLabel(double preferred, double lo, double hi)
+	{
+		return hi <= lo ? lo : Math.clamp(preferred, lo, hi);
+	}
+
 	public static void drawBackground(GraphicsContext g, double width, double height)
 	{
 		g.setFill(new LinearGradient(0, 0, 0, height, false, CycleMethod.NO_CYCLE,
@@ -188,7 +205,8 @@ public final class Draw
 		g.beginPath();
 		for (int i = 0; i < centers.length; i++)
 		{
-			double x = fX(centers[i], plotW), y = dbY(vals[i], plotH);
+			double x = fX(centers[i], plotW);
+			double y = dbY(vals[i], plotH);
 			if (i == 0) g.moveTo(x, y);
 			else
 				g.lineTo(x, y);
@@ -277,7 +295,8 @@ public final class Draw
 		for (int k = 0; k < Math.min(3, peaks.size()); k++)
 		{
 			Peak pk = peaks.get(k);
-			double x = fX(pk.f, plotW), y = dbY(pk.v, plotH);
+			double x = fX(pk.f, plotW);
+			double y = dbY(pk.v, plotH);
 			g.setFill(Color.web("#e9fb9b"));
 			g.fillOval(x - 3.5, y - 3.5, 7, 7);
 			g.setStroke(col);
@@ -290,7 +309,7 @@ public final class Draw
 			g.setFont(labelFont);
 			double tw = Fonts.width(labelFont, label);
 			double bx = x - tw / 2 - 6;
-			bx = Math.max(PAD_L + 2, Math.min(bx, width - PAD_R - tw - 12));
+			bx = pinLabel(bx, PAD_L + 2, width - PAD_R - tw - 12);
 			double by = Math.max(PAD_T + 2, y - 26);
 			g.setFill(Color.rgb(8, 11, 17, 0.9));
 			roundRect(g, bx, by, tw + 12, 17, 4);
@@ -321,7 +340,7 @@ public final class Draw
 		g.setFont(f);
 		double tw = Fonts.width(f, lab);
 		double bx = x - tw / 2 - 6;
-		bx = Math.max(PAD_L, Math.min(bx, width - PAD_R - tw - 12));
+		bx = pinLabel(bx, PAD_L, width - PAD_R - tw - 12);
 		g.setFill(Color.rgb(255, 91, 96, 0.94));
 		roundRect(g, bx, PAD_T + 2, tw + 12, 17, 4);
 		g.setFill(Color.web("#180405"));
@@ -364,7 +383,8 @@ public final class Draw
 		g.setStroke(Color.rgb(255, 255, 255, 0.22));
 		g.setLineWidth(1);
 		g.strokeLine(cx, PAD_T, cx, PAD_T + plotH);
-		double micV = dispMic[idx], soloV = dispSolo[idx];
+		double micV = dispMic[idx];
+		double soloV = dispSolo[idx];
 		if (micOn) dot(g, cx, dbY(micV, plotH), Color.web("#22d3ee"));
 		if (soloOn) dot(g, cx, dbY(soloV, plotH), Color.web("#f5a524"));
 		String fl = centers[idx] >= 1000
@@ -406,7 +426,9 @@ public final class Draw
 
 	public static void drawZoneStrip(GraphicsContext g, double plotW, double plotH, double width, double height)
 	{
-		double zy = PAD_T + plotH + 24, zh = 14;
+		double zy = PAD_T + plotH + 24;
+		double zh = 14;
+
 		g.setFont(Fonts.mono(FontWeight.SEMI_BOLD, 8.5));
 		for (Zone z : Engine.ZONES)
 		{

@@ -132,7 +132,8 @@ public final class AnalyzerView extends Region
 			}
 		}
 
-		boolean micOn = state.micOn.get(), soloOn = state.soloOn.get();
+		boolean micOn = state.micOn.get();
+		boolean soloOn = state.soloOn.get();
 		boolean showTransfer = state.showTransfer.get();
 
 		Draw.drawBackground(g, width, height);

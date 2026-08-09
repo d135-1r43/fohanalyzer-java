@@ -122,7 +122,10 @@ public final class Engine
 		double lead = 0.5 + 0.5 * Math.sin(t * 1.27) + 0.3 * Math.sin(t * 2.73 + 1.1);
 		lead = Math.clamp(lead, 0, 1);
 
-		double ringLvl = 0, ringOsc = 1, ringFc = 1000;
+		double ringLvl = 0;
+		double ringOsc = 1;
+		double ringFc = 1000;
+
 		if (ring != null && ring.active())
 		{
 			double age = t - ring.t0();

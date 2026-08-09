@@ -55,7 +55,9 @@ class AudioDspTest
 	{
 		double[] centers = Engine.bandCenters(24);
 		float[] bands = AudioDsp.bands(AudioDsp.spectrumDb(sine(1000, 0.5)), RATE / N, centers, 24);
-		int near = 0, far = 0;
+		int near = 0;
+		int far = 0;
+
 		for (int i = 1; i < centers.length; i++)
 		{
 			if (Math.abs(centers[i] - 1000) < Math.abs(centers[near] - 1000)) near = i;

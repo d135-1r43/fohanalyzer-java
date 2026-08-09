@@ -421,7 +421,7 @@ public final class ControlRail extends ScrollPane
 	{
 		Stats st = state.stats.get();
 		double prominence = st != null ? st.micPeak() - st.micAvg() : 6;
-		return (int)Math.round(Math.max(3, Math.min(12, prominence)));
+		return (int)Math.round(Math.clamp(prominence, 3, 12));
 	}
 
 	private void removeFb(FeedbackEntry en)
