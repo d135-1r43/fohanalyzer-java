@@ -77,6 +77,13 @@ jobs:
           path: target/dist/*.dmg
           if-no-files-found: error
 
+      # Created as a draft: the notes are generated from commit history, so they are worth
+      # reading once before anyone can download them. Publish from the Releases page.
+      #
+      # --notes is prepended to --generate-notes rather than replacing it, so the install
+      # note stays above the generated changelog. The Gatekeeper wording matters: macOS 15
+      # removed the right-click-Open shortcut every older guide describes, so telling people
+      # to use it would read as the app being broken.
       - name: Publish the release
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -84,8 +91,17 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             --title "FOHanalyzer ${{ steps.pom.outputs.version }}" \
+            --draft \
             --generate-notes \
-            --notes "The bundle is ad-hoc signed and not notarised, so Gatekeeper refuses
-          the first launch on another Mac: right-click the app and choose **Open**.
-          Built for Apple silicon." \
+            --notes "Built for Apple silicon. Drag FOHanalyzer to Applications — it ships
+          its own Java runtime, so no JDK is needed.
+
+          The bundle is ad-hoc signed and not notarised, so Gatekeeper refuses the first
+          launch. Either clear the quarantine flag:
+
+              xattr -dr com.apple.quarantine /Applications/FOHanalyzer.app
+
+          or open it once and press **Open Anyway** in **System Settings → Privacy &
+          Security**. On macOS 15 and later those are the only two routes — the older
+          right-click-Open shortcut no longer exists." \
             target/dist/*.dmg

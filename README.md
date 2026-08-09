@@ -48,9 +48,18 @@ Grab the `.dmg` and drag FOHanalyzer to Applications — it ships its own Java r
 macOS will ask for microphone permission the first time you select a live input; that is the
 measurement mic and console feeds, and without it the analyser has nothing to read.
 
-> The bundle is ad-hoc signed, not notarised, so Gatekeeper on another Mac will refuse the
-> first launch: right-click the app and choose **Open** to allow it. A Developer ID
-> signature and notarisation would remove that step.
+> The bundle is ad-hoc signed, not notarised, so Gatekeeper refuses the first launch on
+> another Mac. To allow it, either clear the quarantine flag:
+>
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/FOHanalyzer.app
+> ```
+>
+> or open it once, then go to **System Settings → Privacy & Security** and press
+> **Open Anyway** next to the warning. Older guides say to right-click the app and choose
+> *Open* — macOS 15 removed that shortcut, so on 15 and later the two routes above are the
+> only ones. A Developer ID signature plus notarisation would remove the step entirely, and
+> needs a paid Apple Developer account.
 
 ## Development
 
