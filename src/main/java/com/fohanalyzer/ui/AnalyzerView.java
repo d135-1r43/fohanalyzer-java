@@ -1,5 +1,6 @@
 package com.fohanalyzer.ui;
 
+import com.fohanalyzer.audio.AudioSource;
 import com.fohanalyzer.dsp.SignalState;
 import com.fohanalyzer.dsp.Stats;
 import com.fohanalyzer.engine.Engine;
@@ -74,6 +75,18 @@ public final class AnalyzerView extends Region
 		canvas.setHeight(h);
 	}
 
+	/**
+	 * Live bands from {@code src}, or {@code null} to fall back to the
+	 * simulation. Anything that is not a full trace counts as absent: this runs
+	 * on the pulse, and an exception here loses the whole frame — every bar,
+	 * grid line and label — not just the source that misbehaved.
+	 */
+	private static float[] liveBands(AudioSource src, double[] centers, int frac)
+	{
+		float[] bands = src != null ? src.readBands(centers, frac) : null;
+		return bands != null && bands.length == centers.length ? bands : null;
+	}
+
 	private void frame(double t)
 	{
 		double width = canvas.getWidth();
@@ -101,8 +114,8 @@ public final class AnalyzerView extends Region
 		Ring ring = state.ring.get();
 		Engine.SimFrame sim = Engine.sample(centers, t, ring);
 
-		float[] liveMic = state.micSource != null ? state.micSource.readBands(centers, frac) : null;
-		float[] liveSolo = state.soloSource != null ? state.soloSource.readBands(centers, frac) : null;
+		float[] liveMic = liveBands(state.micSource, centers, frac);
+		float[] liveSolo = liveBands(state.soloSource, centers, frac);
 
 		Voice mvc = liveMic != null ? Voice.NEUTRAL : state.micVoice();
 		Voice svc = liveSolo != null ? Voice.NEUTRAL : state.soloVoice();

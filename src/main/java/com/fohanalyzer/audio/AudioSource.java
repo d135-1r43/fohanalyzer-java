@@ -258,10 +258,19 @@ public final class AudioSource
 		return w;
 	}
 
-	/** Per-band dBFS levels, or {@code null} if not connected. */
+	/**
+	 * Per-band dBFS levels, or {@code null} if not connected.
+	 *
+	 * <p>
+	 * Null rather than an empty array: callers distinguish "no live signal,
+	 * fall back to the simulation" from real data by a null check, and a
+	 * zero-length array passes that check while carrying no bands. The window
+	 * between creating a source and its background connect() completing is
+	 * enough to hit it.
+	 */
 	public float[] readBands(double[] centers, int frac)
 	{
-		if (!isConnected()) return new float[0];
+		if (!isConnected()) return null;
 		double[] spec = AudioDsp.spectrumDb(snapshotWindow());
 		double binHz = sampleRate / FFT_SIZE;
 		return AudioDsp.bands(spec, binHz, centers, frac);
