@@ -137,23 +137,26 @@ public final class PreferencesWindow
 	{
 		return section("Sources",
 			sourceRow("Measurement Mic", "#22d3ee", AppState.MIC_INPUTS,
-				state.micChan, state.micChanIdx, state.micChanCount),
+				state.micChan, state.micChanIdx, state.micChanCount, null),
 			sourceRow("Solo Bus", "#f5a524", AppState.SOLO_INPUTS,
-				state.soloChan, state.soloChanIdx, state.soloChanCount),
+				state.soloChan, state.soloChanIdx, state.soloChanCount, state.soloStereo),
 			hint("Live inputs are listed first, simulated presets below. A"
-				+ " multi-channel interface adds a channel stepper."));
+				+ " multi-channel interface adds a channel stepper. Set the solo"
+				+ " bus to Stereo to read the selected channel and the one above"
+				+ " it as a pair, merged to one trace."));
 	}
 
 	private VBox sourceRow(String name, String color, java.util.List<InputPreset> options,
 		javafx.beans.property.StringProperty chan,
 		javafx.beans.property.IntegerProperty chanIdx,
-		javafx.beans.property.IntegerProperty chanCount)
+		javafx.beans.property.IntegerProperty chanCount,
+		javafx.beans.property.BooleanProperty stereo)
 	{
 		Label lbl = new Label(name);
 		lbl.getStyleClass().add("ctl-lbl");
 		lbl.setStyle("-fx-text-fill:" + color + ";");
 		ChannelSelect select = new ChannelSelect(chan, options, state.audioDevices, color,
-			chanIdx, chanCount);
+			chanIdx, chanCount, stereo);
 		return new VBox(7, lbl, select);
 	}
 

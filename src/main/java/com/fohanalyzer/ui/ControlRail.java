@@ -74,7 +74,8 @@ public final class ControlRail extends ScrollPane
 			state.micChan, state.micChanIdx, state.micChanCount, state.audioDevices);
 		soloCard = new SourceCard("Solo Bus", "#f5a524",
 			state.soloOn, state.markerSource, "solo", AppState.SOLO_INPUTS,
-			state.soloChan, state.soloChanIdx, state.soloChanCount, state.audioDevices);
+			state.soloChan, state.soloChanIdx, state.soloChanCount, state.audioDevices,
+			state.soloStereo);
 		return section("Sources", micCard, soloCard);
 	}
 

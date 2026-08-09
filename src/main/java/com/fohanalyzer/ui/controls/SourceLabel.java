@@ -35,6 +35,21 @@ final class SourceLabel
 	}
 
 	/**
+	 * Which channel is being read, 1-based: {@code "Ch 3"}, or {@code "Ch 3-4"}
+	 * for a stereo pair, which always runs from the selected channel upwards.
+	 */
+	static String channelShort(int idx, boolean stereo)
+	{
+		return stereo ? "Ch " + (idx + 1) + "-" + (idx + 2) : "Ch " + (idx + 1);
+	}
+
+	/** As {@link #channelShort} plus the device's total, for the stepper. */
+	static String channel(int idx, int count, boolean stereo)
+	{
+		return channelShort(idx, stereo) + " / " + count;
+	}
+
+	/**
 	 * The device or preset name. A live value whose device is not currently
 	 * present reads as unknown rather than falling back to a preset, since the
 	 * two mean different things to whoever is looking at the rail.

@@ -50,6 +50,12 @@ public final class AppState
 	public final IntegerProperty soloChanIdx = new SimpleIntegerProperty(0);
 	public final IntegerProperty micChanCount = new SimpleIntegerProperty(1);
 	public final IntegerProperty soloChanCount = new SimpleIntegerProperty(1);
+	/**
+	 * Read the solo bus as a stereo pair — the selected channel and the one
+	 * above it — merged to one trace. A solo bus usually is stereo; the
+	 * measurement mic is not, so this is deliberately solo-only.
+	 */
+	public final BooleanProperty soloStereo = new SimpleBooleanProperty(false);
 
 	// Ring-out / reference / overlays
 	public final ObjectProperty<Ring> ring = new SimpleObjectProperty<>(Ring.INACTIVE);

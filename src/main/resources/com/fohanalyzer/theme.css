@@ -169,6 +169,13 @@
     -fx-background-color: transparent; -fx-text-fill: -txt-dim; -fx-font-size: 14px; -fx-cursor: hand;
 }
 .chan-idx-label { -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 11px; -fx-text-fill: -txt-dim; }
+/* Mono/Stereo for the solo bus. The active side is coloured inline by
+   ChannelSelect, in the source's own accent, matching the marker pill. */
+.chan-mode-btn {
+    -fx-background-color: #0a0e14; -fx-border-color: -line; -fx-border-radius: 8;
+    -fx-background-radius: 8; -fx-padding: 4 0 4 0; -fx-cursor: hand;
+    -fx-font-family: "IBM Plex Mono", monospace; -fx-font-size: 10px; -fx-text-fill: -txt-mut;
+}
 
 /* ---- segmented ---- */
 .segmented { -fx-background-color: #0a0e14; -fx-border-color: -line; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 3; }

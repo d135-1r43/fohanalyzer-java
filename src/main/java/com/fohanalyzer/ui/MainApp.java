@@ -244,6 +244,7 @@ public class MainApp extends Application
 		state.micChanIdx.addListener((o, a, b) -> mic.run());
 		state.soloChan.addListener((o, a, b) -> solo.run());
 		state.soloChanIdx.addListener((o, a, b) -> solo.run());
+		state.soloStereo.addListener((o, a, b) -> solo.run());
 		mic.run();
 		solo.run();
 	}
@@ -252,6 +253,9 @@ public class MainApp extends Application
 	{
 		String chan = (isMic ? state.micChan : state.soloChan).get();
 		int idx = (isMic ? state.micChanIdx : state.soloChanIdx).get();
+		// Solo can be read as a stereo pair; the measurement mic is always
+		// mono.
+		boolean stereo = !isMic && state.soloStereo.get();
 		if (chan.startsWith("live:"))
 		{
 			String id = chan.substring(5);
@@ -269,15 +273,17 @@ public class MainApp extends Application
 			AudioSource source = src;
 			// Open the line off the FX thread; report the channel count back.
 			new Thread(() -> {
-				int count = source.connect(dev.get(), idx);
+				int count = source.connect(dev.get(), idx, stereo);
 				Platform.runLater(() -> {
 					(isMic ? state.micChanCount : state.soloChanCount).set(count);
 					// A restored channel index can outrun the device it lands
 					// on — e.g. Ch 8 saved against an 18i20, reopened on a
-					// 2-in interface.
-					if (idx >= count)
+					// 2-in interface. A stereo pair needs one channel more,
+					// so the last selectable index is one lower.
+					int last = Math.max(0, count - (stereo ? 2 : 1));
+					if (idx > last)
 					{
-						(isMic ? state.micChanIdx : state.soloChanIdx).set(Math.max(0, count - 1));
+						(isMic ? state.micChanIdx : state.soloChanIdx).set(last);
 					}
 				});
 			}, "audio-connect").start();

@@ -35,6 +35,21 @@ public final class SourceCard extends VBox
 		IntegerProperty chanIdx, IntegerProperty chanCount,
 		ObservableList<AudioDevice> audioDevices)
 	{
+		this(name, color, on, markerSource, markerId, options, chan, chanIdx, chanCount,
+			audioDevices, null);
+	}
+
+	/**
+	 * @param stereo
+	 *            when non-null and set, the selection line reads the pair the
+	 *            source is merging. Null for an always-mono source.
+	 */
+	public SourceCard(String name, String color,
+		BooleanProperty on, StringProperty markerSource, String markerId,
+		List<InputPreset> options, StringProperty chan,
+		IntegerProperty chanIdx, IntegerProperty chanCount,
+		ObservableList<AudioDevice> audioDevices, BooleanProperty stereo)
+	{
 		getStyleClass().add("src-card");
 		setSpacing(9);
 
@@ -64,13 +79,14 @@ public final class SourceCard extends VBox
 			tag.setStyle("-fx-text-fill:" + tc + "; -fx-border-color:" + tc + ";");
 			// The channel only means anything on a multi-channel live input.
 			String suffix = live && chanCount.get() > 1
-				? "  ·  Ch " + (chanIdx.get() + 1)
+				? "  ·  " + SourceLabel.channelShort(chanIdx.get(), stereo != null && stereo.get())
 				: "";
 			selection.setText(SourceLabel.of(value, options, audioDevices) + suffix);
 		};
 		chan.addListener((o, a, b) -> refreshSel.run());
 		chanIdx.addListener((o, a, b) -> refreshSel.run());
 		chanCount.addListener((o, a, b) -> refreshSel.run());
+		if (stereo != null) stereo.addListener((o, a, b) -> refreshSel.run());
 		audioDevices.addListener((javafx.collections.ListChangeListener<AudioDevice>)c -> refreshSel.run());
 		refreshSel.run();
 

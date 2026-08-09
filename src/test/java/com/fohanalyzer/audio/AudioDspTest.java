@@ -1,6 +1,7 @@
 package com.fohanalyzer.audio;
 
 import com.fohanalyzer.engine.Engine;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,5 +111,83 @@ class AudioDspTest
 	void pitchDetectionRejectsTooShortAWindow()
 	{
 		assertNull(AudioDsp.detectPitch(new float[AudioDsp.PITCH_BUFFER - 1], RATE));
+	}
+
+	@Nested
+	class PowerMerge
+	{
+		@Test
+		void twoEqualLevelsAverageToThatSameLevel()
+		{
+			// Not +3 dB: a centred mono source must read the same whether it
+			// arrives on one channel or on both sides of a pair.
+			assertEquals(-20, AudioDsp.powerMeanDb(-20, -20), 1e-9);
+		}
+
+		@Test
+		void aSourceOnOneSideOnlyReadsThreeDbDown()
+		{
+			assertEquals(-23.0103, AudioDsp.powerMeanDb(-20, -240), 1e-4);
+		}
+
+		@Test
+		void theLouderSideDominates()
+		{
+			double merged = AudioDsp.powerMeanDb(-10, -40);
+			assertTrue(merged < -10, "cannot exceed the louder side");
+			assertTrue(merged > -13.1, "should sit just under -10-3 dB");
+		}
+
+		@Test
+		void isSymmetric()
+		{
+			assertEquals(AudioDsp.powerMeanDb(-12, -30), AudioDsp.powerMeanDb(-30, -12), 1e-12);
+		}
+
+		@Test
+		void silenceOnBothSidesStaysAtTheFloor()
+		{
+			assertEquals(-240, AudioDsp.powerMeanDb(-240, -240), 1e-9);
+		}
+
+		@Test
+		void mergesBinByBinAndTakesTheShorterLength()
+		{
+			double[] a = { -20, -30, -40 };
+			double[] b = { -20, -240 };
+			double[] merged = AudioDsp.mergePower(a, b);
+			assertEquals(2, merged.length);
+			assertEquals(-20, merged[0], 1e-9);
+			assertEquals(-33.0103, merged[1], 1e-4);
+		}
+
+		/**
+		 * The property that motivates power merging: two sides that would
+		 * cancel completely in a time-domain sum still read their true level
+		 * here.
+		 */
+		@Test
+		void oppositePolarityDoesNotCancel()
+		{
+			float[] left = sine(1000, 0.5f);
+			float[] right = new float[left.length];
+			for (int i = 0; i < left.length; i++)
+				right[i] = -left[i];
+
+			double[] merged = AudioDsp.mergePower(
+				AudioDsp.spectrumDb(left), AudioDsp.spectrumDb(right));
+			double[] solo = AudioDsp.spectrumDb(left);
+
+			double[] centers = Engine.bandCenters(12);
+			double binHz = RATE / N;
+			float[] mergedBands = AudioDsp.bands(merged, binHz, centers, 12);
+			float[] soloBands = AudioDsp.bands(solo, binHz, centers, 12);
+
+			int peak = 0;
+			for (int i = 1; i < centers.length; i++)
+				if (soloBands[i] > soloBands[peak]) peak = i;
+			assertEquals(soloBands[peak], mergedBands[peak], 0.01,
+				"merged pair should match the single side, not cancel to silence");
+		}
 	}
 }

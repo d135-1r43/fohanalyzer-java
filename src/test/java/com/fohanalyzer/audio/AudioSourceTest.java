@@ -56,4 +56,28 @@ class AudioSourceTest
 	{
 		assertThrows(IllegalArgumentException.class, () -> new AudioSource().connect(null, 0));
 	}
+
+	@Test
+	void defaultsToMonoAndTracksTheStereoFlag()
+	{
+		AudioSource src = new AudioSource();
+		assertFalse(src.isStereo());
+		src.setStereo(true);
+		assertTrue(src.isStereo());
+		src.setStereo(false);
+		assertFalse(src.isStereo());
+	}
+
+	/**
+	 * A disconnected source reports one channel, so there is no room for a pair
+	 * and the index has to stay at 0 rather than going negative.
+	 */
+	@Test
+	void stereoOnASingleChannelSourceStaysAtIndexZero()
+	{
+		AudioSource src = new AudioSource();
+		src.setStereo(true);
+		src.setChannel(7);
+		assertEquals(0, src.getChannelIndex());
+	}
 }

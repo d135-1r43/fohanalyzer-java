@@ -121,6 +121,47 @@ public final class AudioDsp
 	}
 
 	/**
+	 * Mean of two dB values in the power domain:
+	 * {@code 10*log10((Pa + Pb) / 2)}.
+	 *
+	 * <p>
+	 * Two equal levels average to that same level rather than to +3 dB, so a
+	 * centred mono source reads identically whether it arrives on one channel
+	 * or on both. A source present on only one side reads 3 dB down, which is
+	 * the honest answer — half the energy is on the other side.
+	 */
+	public static double powerMeanDb(double aDb, double bDb)
+	{
+		double p = (Math.pow(10, aDb / 10) + Math.pow(10, bDb / 10)) / 2;
+		return p > 1e-24 ? 10 * Math.log10(p) : -240;
+	}
+
+	/**
+	 * Combine two dBFS spectra bin by bin with {@link #powerMeanDb}, for
+	 * reading a stereo pair as one trace.
+	 *
+	 * <p>
+	 * This is an <em>incoherent</em> sum: each channel is transformed on its
+	 * own and only the magnitudes are combined, so the result cannot cancel.
+	 * Summing the two channels in the time domain instead would be a coherent
+	 * sum, where any phase difference between the sides carves comb notches
+	 * into the spectrum — real for a mono-summing bus, but an artefact of the
+	 * measurement for anything legitimately wide, such as a stereo reverb. The
+	 * trade is that this can never reveal an L/R polarity or delay fault,
+	 * because it is blind to phase by construction.
+	 */
+	public static double[] mergePower(double[] aDb, double[] bDb)
+	{
+		int n = Math.min(aDb.length, bDb.length);
+		double[] out = new double[n];
+		for (int i = 0; i < n; i++)
+		{
+			out[i] = powerMeanDb(aDb[i], bDb[i]);
+		}
+		return out;
+	}
+
+	/**
 	 * A detected fundamental: frequency in Hz plus YIN's own confidence in it.
 	 */
 	public record Pitch(double hz, double probability)

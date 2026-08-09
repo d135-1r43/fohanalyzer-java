@@ -2,6 +2,7 @@ package com.fohanalyzer.ui.controls;
 
 import com.fohanalyzer.audio.AudioDevice;
 import com.fohanalyzer.ui.InputPreset;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
@@ -27,15 +28,30 @@ public final class ChannelSelect extends VBox
 	private final String color;
 	private final IntegerProperty chanIdx;
 	private final IntegerProperty chanCount;
+	private final BooleanProperty stereo;
 
 	private final Label tag = new Label();
 	private final Label valLabel = new Label();
 	private final HBox stepper;
 	private final Label idxLabel = new Label();
+	private final HBox modeRow;
 
 	public ChannelSelect(StringProperty value, List<InputPreset> options,
 		ObservableList<AudioDevice> audioDevices, String color,
 		IntegerProperty chanIdx, IntegerProperty chanCount)
+	{
+		this(value, options, audioDevices, color, chanIdx, chanCount, null);
+	}
+
+	/**
+	 * @param stereo
+	 *            when non-null, adds a mono/stereo choice and the stepper
+	 *            selects the first channel of a pair. Null for a source that is
+	 *            always mono.
+	 */
+	public ChannelSelect(StringProperty value, List<InputPreset> options,
+		ObservableList<AudioDevice> audioDevices, String color,
+		IntegerProperty chanIdx, IntegerProperty chanCount, BooleanProperty stereo)
 	{
 		this.value = value;
 		this.options = options;
@@ -43,6 +59,7 @@ public final class ChannelSelect extends VBox
 		this.color = color;
 		this.chanIdx = chanIdx;
 		this.chanCount = chanCount;
+		this.stereo = stereo;
 		setSpacing(6);
 
 		Button btn = new Button();
@@ -73,18 +90,22 @@ public final class ChannelSelect extends VBox
 			if (chanIdx.get() > 0) chanIdx.set(chanIdx.get() - 1);
 		});
 		next.setOnAction(e -> {
-			if (chanIdx.get() < chanCount.get() - 1) chanIdx.set(chanIdx.get() + 1);
+			if (chanIdx.get() < lastIdx()) chanIdx.set(chanIdx.get() + 1);
 		});
 		stepper = new HBox(6, prev, idxLabel, next);
 		stepper.setAlignment(Pos.CENTER);
 		stepper.setStyle("-fx-background-color:#0a0e14; -fx-border-color:#1c2733;"
 			+ " -fx-border-radius:8; -fx-background-radius:8; -fx-padding:4 6 4 6;");
 
+		modeRow = buildModeRow();
+
 		getChildren().addAll(btn, stepper);
+		if (modeRow != null) getChildren().add(modeRow);
 
 		value.addListener((o, a, b) -> refresh());
 		chanIdx.addListener((o, a, b) -> refresh());
 		chanCount.addListener((o, a, b) -> refresh());
+		if (stereo != null) stereo.addListener((o, a, b) -> refresh());
 		audioDevices.addListener((javafx.collections.ListChangeListener<AudioDevice>)c -> refresh());
 		refresh();
 	}
@@ -92,6 +113,49 @@ public final class ChannelSelect extends VBox
 	private boolean isLive()
 	{
 		return SourceLabel.isLive(value.get());
+	}
+
+	private boolean isStereo()
+	{
+		return stereo != null && stereo.get();
+	}
+
+	/**
+	 * Last selectable index. A stereo pair extends upwards into the next
+	 * channel, so it cannot start on the final one.
+	 */
+	private int lastIdx()
+	{
+		return Math.max(0, chanCount.get() - (isStereo() ? 2 : 1));
+	}
+
+	/** Mono/stereo pair of buttons, or null for an always-mono source. */
+	private HBox buildModeRow()
+	{
+		if (stereo == null) return null;
+		Button mono = new Button("Mono");
+		Button pair = new Button("Stereo");
+		mono.getStyleClass().add("chan-mode-btn");
+		pair.getStyleClass().add("chan-mode-btn");
+		mono.setMaxWidth(Double.MAX_VALUE);
+		pair.setMaxWidth(Double.MAX_VALUE);
+		HBox.setHgrow(mono, Priority.ALWAYS);
+		HBox.setHgrow(pair, Priority.ALWAYS);
+		mono.setOnAction(e -> stereo.set(false));
+		pair.setOnAction(e -> stereo.set(true));
+		Runnable style = () -> {
+			boolean s = isStereo();
+			mono.setStyle(s ? ""
+				: "-fx-text-fill:" + color + "; -fx-border-color:" + color
+					+ "; -fx-font-weight:bold;");
+			pair.setStyle(s ? "-fx-text-fill:" + color + "; -fx-border-color:" + color
+				+ "; -fx-font-weight:bold;" : "");
+		};
+		stereo.addListener((o, a, b) -> style.run());
+		style.run();
+		HBox row = new HBox(6, mono, pair);
+		row.setAlignment(Pos.CENTER);
+		return row;
 	}
 
 	private void refresh()
@@ -102,10 +166,19 @@ public final class ChannelSelect extends VBox
 		String tc = live ? "#a3e635" : color;
 		tag.setStyle("-fx-text-fill:" + tc + "; -fx-border-color:" + tc + ";");
 
+		// A pair needs two channels to exist before the choice means anything.
+		if (modeRow != null)
+		{
+			boolean showMode = live && chanCount.get() > 1;
+			modeRow.setVisible(showMode);
+			modeRow.setManaged(showMode);
+		}
+		if (isStereo() && chanIdx.get() > lastIdx()) chanIdx.set(lastIdx());
+
 		boolean showStepper = live && chanCount.get() > 1;
 		stepper.setVisible(showStepper);
 		stepper.setManaged(showStepper);
-		idxLabel.setText("Ch " + (chanIdx.get() + 1) + " / " + chanCount.get());
+		idxLabel.setText(SourceLabel.channel(chanIdx.get(), chanCount.get(), isStereo()));
 	}
 
 	private void showMenu(Button anchor)

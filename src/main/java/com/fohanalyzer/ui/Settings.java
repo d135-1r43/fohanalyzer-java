@@ -31,6 +31,7 @@ public final class Settings
 	private static final String SOLO_CHAN = "soloChan";
 	private static final String MIC_CHAN_IDX = "micChanIdx";
 	private static final String SOLO_CHAN_IDX = "soloChanIdx";
+	private static final String SOLO_STEREO = "soloStereo";
 	private static final String FRAC = "frac";
 	private static final String SMOOTHING = "smoothing";
 	private static final String AVG_N = "avgN";
@@ -119,6 +120,7 @@ public final class Settings
 		state.showTransfer.set(d.showTransfer.get());
 		state.micChanIdx.set(d.micChanIdx.get());
 		state.soloChanIdx.set(d.soloChanIdx.get());
+		state.soloStereo.set(d.soloStereo.get());
 		state.micChan.set(d.micChan.get());
 		state.soloChan.set(d.soloChan.get());
 
@@ -205,6 +207,7 @@ public final class Settings
 		st.peakHold.set(prefs.getBoolean(PEAK_HOLD, st.peakHold.get()));
 		st.markers.set(prefs.getBoolean(MARKERS, st.markers.get()));
 		st.showTransfer.set(prefs.getBoolean(SHOW_TRANSFER, st.showTransfer.get()));
+		st.soloStereo.set(prefs.getBoolean(SOLO_STEREO, st.soloStereo.get()));
 
 		restoreSource(st, true);
 		restoreSource(st, false);
@@ -269,6 +272,7 @@ public final class Settings
 		st.soloChan.addListener((o, a, v) -> prefs.put(SOLO_CHAN, v));
 		st.micChanIdx.addListener((o, a, v) -> prefs.putInt(MIC_CHAN_IDX, v.intValue()));
 		st.soloChanIdx.addListener((o, a, v) -> prefs.putInt(SOLO_CHAN_IDX, v.intValue()));
+		st.soloStereo.addListener((o, a, v) -> prefs.putBoolean(SOLO_STEREO, v));
 		st.frac.addListener((o, a, v) -> prefs.putInt(FRAC, v.intValue()));
 		st.smoothing.addListener((o, a, v) -> prefs.putDouble(SMOOTHING, v.doubleValue()));
 		st.avgN.addListener((o, a, v) -> prefs.putInt(AVG_N, v.intValue()));

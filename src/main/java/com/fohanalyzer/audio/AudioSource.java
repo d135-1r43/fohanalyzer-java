@@ -27,13 +27,16 @@ public final class AudioSource
 
 	private volatile int channelCount = 1;
 	private volatile int channelIndex = 0;
+	private volatile boolean stereo;
 	private float sampleRate = TARGET_RATE;
 	private String deviceId;
 	private volatile String error;
 
-	// Ring buffer of the most recent FFT_SIZE mono samples for the selected
-	// channel.
+	// Ring buffers of the most recent FFT_SIZE samples. In mono only `ring` is
+	// meaningful; in stereo it holds the selected channel and `ringR` the one
+	// above it. Both are filled from the same frame so the two stay aligned.
 	private final float[] ring = new float[FFT_SIZE];
+	private final float[] ringR = new float[FFT_SIZE];
 	private int ringPos = 0;
 	private final Object ringLock = new Object();
 
@@ -50,6 +53,36 @@ public final class AudioSource
 	public int getChannelIndex()
 	{
 		return channelIndex;
+	}
+
+	public boolean isStereo()
+	{
+		return stereo;
+	}
+
+	/**
+	 * Read the selected channel and the one above it as a pair, or just the
+	 * selected one.
+	 *
+	 * <p>
+	 * The line is always opened at the device's full channel count, so this
+	 * only changes how the captured frames are read — no reopen, and it is safe
+	 * to flip while capturing. The channel index is re-clamped because a pair
+	 * needs one more channel above it than a single does.
+	 */
+	public synchronized void setStereo(boolean stereo)
+	{
+		this.stereo = stereo;
+		setChannel(channelIndex);
+	}
+
+	/**
+	 * Highest channel index that can be selected: one below the last channel in
+	 * stereo, since the pair extends upwards.
+	 */
+	private int maxChannelIndex()
+	{
+		return Math.max(0, channelCount - (stereo ? 2 : 1));
 	}
 
 	public String getError()
@@ -69,6 +102,16 @@ public final class AudioSource
 	 */
 	public synchronized int connect(AudioDevice device, int channelIndex)
 	{
+		return connect(device, channelIndex, false);
+	}
+
+	/**
+	 * As {@link #connect(AudioDevice, int)}, reading {@code channelIndex} and
+	 * the channel above it as a stereo pair when {@code stereo} is set.
+	 */
+	public synchronized int connect(AudioDevice device, int channelIndex, boolean stereo)
+	{
+		this.stereo = stereo;
 		if (isConnected() && device != null && device.id().equals(deviceId))
 		{
 			setChannel(channelIndex);
@@ -94,7 +137,7 @@ public final class AudioSource
 
 			sampleRate = format.getSampleRate();
 			channelCount = format.getChannels();
-			this.channelIndex = Math.clamp(channelIndex, 0, channelCount - 1);
+			this.channelIndex = Math.clamp(channelIndex, 0, maxChannelIndex());
 			deviceId = device.id();
 
 			running = true;
@@ -169,7 +212,7 @@ public final class AudioSource
 			this.channelIndex = 0;
 			return;
 		}
-		this.channelIndex = Math.clamp(channelIndex, 0, channelCount - 1);
+		this.channelIndex = Math.clamp(channelIndex, 0, maxChannelIndex());
 	}
 
 	public synchronized void disconnect()
@@ -192,6 +235,7 @@ public final class AudioSource
 		synchronized (ringLock)
 		{
 			java.util.Arrays.fill(ring, 0f);
+			java.util.Arrays.fill(ringR, 0f);
 			ringPos = 0;
 		}
 	}
@@ -210,13 +254,19 @@ public final class AudioSource
 				if (read <= 0) continue;
 				int frames = read / frameSize;
 				int idx = channelIndex;
+				// Read both sides from the same frame, so a later snapshot gets
+				// two time-aligned windows. Guarded in case the pair would run
+				// off the end of a device that shrank under us.
+				boolean pair = stereo && idx + 1 < ch;
 				synchronized (ringLock)
 				{
 					for (int fr = 0; fr < frames; fr++)
 					{
-						int off = fr * frameSize + idx * bytesPerSample;
-						float s = sampleToFloat(buf, off, bytesPerSample);
-						ring[ringPos] = s;
+						int base = fr * frameSize;
+						ring[ringPos] = sampleToFloat(buf, base + idx * bytesPerSample, bytesPerSample);
+						ringR[ringPos] = pair
+							? sampleToFloat(buf, base + (idx + 1) * bytesPerSample, bytesPerSample)
+							: 0f;
 						ringPos = (ringPos + 1) % FFT_SIZE;
 					}
 				}
@@ -259,6 +309,28 @@ public final class AudioSource
 	}
 
 	/**
+	 * Latest windows for both sides of the pair, taken under one lock so they
+	 * describe the same span of time. Index 0 is the selected channel, 1 the
+	 * one above it.
+	 */
+	private float[][] snapshotPair()
+	{
+		float[] l = new float[FFT_SIZE];
+		float[] r = new float[FFT_SIZE];
+		synchronized (ringLock)
+		{
+			int start = ringPos;
+			for (int i = 0; i < FFT_SIZE; i++)
+			{
+				int j = (start + i) % FFT_SIZE;
+				l[i] = ring[j];
+				r[i] = ringR[j];
+			}
+		}
+		return new float[][] { l, r };
+	}
+
+	/**
 	 * Per-band dBFS levels, or {@code null} if not connected.
 	 *
 	 * <p>
@@ -271,16 +343,30 @@ public final class AudioSource
 	public float[] readBands(double[] centers, int frac)
 	{
 		if (!isConnected()) return null;
-		double[] spec = AudioDsp.spectrumDb(snapshotWindow());
 		double binHz = sampleRate / FFT_SIZE;
-		return AudioDsp.bands(spec, binHz, centers, frac);
+		if (!stereo)
+		{
+			return AudioDsp.bands(AudioDsp.spectrumDb(snapshotWindow()), binHz, centers, frac);
+		}
+		// Each side is transformed on its own and only the magnitudes are
+		// merged — see AudioDsp.mergePower for why this rather than summing the
+		// two windows before the transform.
+		float[][] w = snapshotPair();
+		double[] merged = AudioDsp.mergePower(
+			AudioDsp.spectrumDb(w[0]), AudioDsp.spectrumDb(w[1]));
+		return AudioDsp.bands(merged, binHz, centers, frac);
 	}
 
-	/** Broadband RMS in dBFS, or {@code null} if not connected. */
+	/**
+	 * Broadband RMS in dBFS, or {@code null} if not connected. A stereo pair is
+	 * averaged in the power domain, matching {@link #readBands}.
+	 */
 	public Double readRMS()
 	{
 		if (!isConnected()) return null;
-		return AudioDsp.rmsDb(snapshotWindow());
+		if (!stereo) return AudioDsp.rmsDb(snapshotWindow());
+		float[][] w = snapshotPair();
+		return AudioDsp.powerMeanDb(AudioDsp.rmsDb(w[0]), AudioDsp.rmsDb(w[1]));
 	}
 
 	/**
@@ -291,6 +377,17 @@ public final class AudioSource
 	public AudioDsp.Pitch readPitch()
 	{
 		if (!isConnected()) return null;
-		return AudioDsp.detectPitch(snapshotWindow(), sampleRate);
+		if (!stereo) return AudioDsp.detectPitch(snapshotWindow(), sampleRate);
+		// YIN needs a waveform, and a power-merged spectrum cannot be turned
+		// back into one, so the pair is summed in the time domain here. A
+		// ringing feedback tone is the same on both sides in practice, which is
+		// the case this serves.
+		float[][] w = snapshotPair();
+		float[] mid = new float[FFT_SIZE];
+		for (int i = 0; i < FFT_SIZE; i++)
+		{
+			mid[i] = (w[0][i] + w[1][i]) * 0.5f;
+		}
+		return AudioDsp.detectPitch(mid, sampleRate);
 	}
 }
