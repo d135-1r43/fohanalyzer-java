@@ -4,7 +4,6 @@ import javafx.beans.property.IntegerProperty;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

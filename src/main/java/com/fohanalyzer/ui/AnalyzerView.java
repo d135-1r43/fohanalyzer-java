@@ -30,7 +30,8 @@ public final class AnalyzerView extends Region
 	private int lastCapture = 0;
 	private int holdResetStamp = 0;
 
-	private double mouseX, mouseY;
+	private double mouseX;
+	private double mouseY;
 	private boolean mouseInside;
 
 	public AnalyzerView(AppState state)
@@ -77,6 +78,7 @@ public final class AnalyzerView extends Region
 	{
 		double width = canvas.getWidth();
 		double height = canvas.getHeight();
+
 		if (width <= 0 || height <= 0) return;
 		GraphicsContext g = canvas.getGraphicsContext2D();
 		double plotW = width - Draw.PAD_L - Draw.PAD_R;

@@ -10,14 +10,17 @@ import java.util.Locale;
  */
 public final class Engine
 {
-	public static final double FMIN = 20, FMAX = 20000;
+	public static final double FMIN = 20;
+	public static final double FMAX = 20000;
 	private static final double LOGMIN = log2(FMIN);
 	private static final double LOGMAX = log2(FMAX);
 	private static final double LOGSPAN = LOGMAX - LOGMIN;
 
 	private static final String[] NOTES = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
-	/** Frequency zones drawn in the colour strip, low to high. */
+	/**
+	 * Frequency zones drawn in the colour strip, low to high.
+	 */
 	public static final List<Zone> ZONES = List.of(
 		new Zone(20, 60, "SUB", "#3b5bff"),
 		new Zone(60, 200, "BASS", "#2f9bff"),
@@ -36,13 +39,17 @@ public final class Engine
 		return Math.log(x) / Math.log(2);
 	}
 
-	/** Normalised log position of a frequency: FMIN -> 0, FMAX -> 1. */
+	/**
+	 * Normalised log position of a frequency: FMIN -> 0, FMAX -> 1.
+	 */
 	public static double freqNorm(double f)
 	{
 		return (log2(f) - LOGMIN) / LOGSPAN;
 	}
 
-	/** Inverse of {@link #freqNorm}. */
+	/**
+	 * Inverse of {@link #freqNorm}.
+	 */
 	public static double normFreq(double n)
 	{
 		return Math.pow(2, LOGMIN + n * LOGSPAN);
@@ -73,7 +80,9 @@ public final class Engine
 		return gainDb * Math.exp(-x * x);
 	}
 
-	/** Nearest musical note name, e.g. 440 -> "A4". Empty string for f <= 0. */
+	/**
+	 * Nearest musical note name, e.g. 440 -> "A4". Empty string for f <= 0.
+	 */
 	public static String noteName(double f)
 	{
 		if (f <= 0) return "";
@@ -83,7 +92,9 @@ public final class Engine
 		return name + oct;
 	}
 
-	/** Result of one simulation frame: two dBFS-per-band traces. */
+	/**
+	 * Result of one simulation frame: two dBFS-per-band traces.
+	 */
 	public record SimFrame(float[] mic, float[] solo)
 	{
 	}
@@ -109,7 +120,7 @@ public final class Engine
 		double hatEnv = Math.exp(-hatFrac * 26) * 0.8;
 		double bassSust = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * Math.PI));
 		double lead = 0.5 + 0.5 * Math.sin(t * 1.27) + 0.3 * Math.sin(t * 2.73 + 1.1);
-		lead = Math.max(0, Math.min(1, lead));
+		lead = Math.clamp(lead, 0, 1);
 
 		double ringLvl = 0, ringOsc = 1, ringFc = 1000;
 		if (ring != null && ring.active())
@@ -158,13 +169,15 @@ public final class Engine
 				sv += bump(f, ringFc, 0.17, ringLvl * 0.7) * ringOsc;
 			}
 
-			mic[i] = (float)Math.max(-95, Math.min(-2, mv));
-			solo[i] = (float)Math.max(-95, Math.min(-2, sv));
+			mic[i] = (float)Math.clamp(mv, -95, -2);
+			solo[i] = (float)Math.clamp(sv, -95, -2);
 		}
 		return new SimFrame(mic, solo);
 	}
 
-	/** Long form, e.g. "440 Hz", "1.00 kHz", "10.0 kHz", or "—" for 0/NaN. */
+	/**
+	 * Long form, e.g. "440 Hz", "1.00 kHz", "10.0 kHz", or "—" for 0/NaN.
+	 */
 	public static String fmtFreq(double f)
 	{
 		if (f == 0 || Double.isNaN(f)) return "—";
@@ -176,7 +189,9 @@ public final class Engine
 		return Math.round(f) + " Hz";
 	}
 
-	/** Short form, e.g. "440", "1.0k", "10k". */
+	/**
+	 * Short form, e.g. "440", "1.0k", "10k".
+	 */
 	public static String fmtShort(double f)
 	{
 		if (f >= 1000)

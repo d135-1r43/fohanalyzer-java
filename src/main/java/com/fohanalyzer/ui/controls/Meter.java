@@ -10,11 +10,9 @@ import javafx.scene.layout.StackPane;
 public final class Meter extends StackPane
 {
 	private final Region fill = new Region();
-	private final String color;
 
 	public Meter(String color)
 	{
-		this.color = color;
 		setPrefHeight(6);
 		setMinHeight(6);
 		setMaxHeight(6);
@@ -35,7 +33,7 @@ public final class Meter extends StackPane
 
 	public void setValue(double dbfs)
 	{
-		double pct = Math.max(0, Math.min(1, (dbfs + 90) / 84));
+		double pct = Math.clamp((dbfs + 90) / 84, 0, 1);
 		fill.resizeRelocate(0, 0, getWidth() * pct, 6);
 		// store for re-layout
 		this.lastPct = pct;

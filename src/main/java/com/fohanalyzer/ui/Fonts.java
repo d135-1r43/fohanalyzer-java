@@ -25,18 +25,16 @@ public final class Fonts
 		"Barlow-Regular.ttf", "Barlow-Bold.ttf",
 	};
 
-	// Must run before the pick* calls below, and before any stylesheet is
-	// applied.
-	private static final int LOADED = loadBundled();
+	static
+	{
+		// Must run before the pick call below, and before any stylesheet is
+		// applied. Barlow is picked up by theme.css, which spells out its own
+		// fallback chain, so only the mono family needs resolving here.
+		loadBundled();
+	}
 
 	/** Monospaced family for readouts and canvas labels. */
 	public static final String MONO = pick("IBM Plex Mono", "Menlo", "Consolas", "DejaVu Sans Mono");
-
-	/**
-	 * UI family for labels and buttons. Barlow stands in for Saira, which
-	 * JavaFX cannot instance from a variable font.
-	 */
-	public static final String SANS = pick("Barlow", "Saira", "Helvetica Neue");
 
 	private static final Text MEASURE = new Text();
 
@@ -54,14 +52,13 @@ public final class Fonts
 		// Touching the class runs the static initialiser; nothing else to do.
 	}
 
-	private static int loadBundled()
+	private static void loadBundled()
 	{
-		int n = 0;
 		for (String file : BUNDLED)
 		{
 			try (InputStream in = Fonts.class.getResourceAsStream(FONT_DIR + file))
 			{
-				if (in != null && Font.loadFont(in, 12) != null) n++;
+				if (in != null) Font.loadFont(in, 12);
 			}
 			catch (Exception ignored)
 			{
@@ -69,7 +66,6 @@ public final class Fonts
 				// family below.
 			}
 		}
-		return n;
 	}
 
 	private static String pick(String... names)

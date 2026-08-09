@@ -32,7 +32,8 @@ public final class ControlRail extends ScrollPane
 	private final PreferencesWindow preferences;
 	private final Random rng = new Random();
 
-	private SourceCard micCard, soloCard;
+	private SourceCard micCard;
+	private SourceCard soloCard;
 
 	public ControlRail(AppState state, Settings settings)
 	{

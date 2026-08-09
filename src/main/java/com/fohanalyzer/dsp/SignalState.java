@@ -9,9 +9,15 @@ import com.fohanalyzer.engine.Voice;
 public final class SignalState
 {
 	private int frac = 0;
-	public float[] avgMic, avgSolo;
-	public float[] dispMic, dispSolo;
-	public float[] holdMic, holdSolo;
+
+	public float[] avgMic;
+	public float[] avgSolo;
+
+	public float[] dispMic;
+	public float[] dispSolo;
+
+	public float[] holdMic;
+	public float[] holdSolo;
 
 	private static double log2(double x)
 	{
@@ -71,7 +77,11 @@ public final class SignalState
 		int n = centers.length;
 		double pMic = -200;
 		int pIdx = 0;
-		double sMic = 0, sSolo = 0, soloPeak = -200;
+
+		double sMic = 0;
+		double sSolo = 0;
+		double soloPeak = -200;
+
 		for (int i = 0; i < n; i++)
 		{
 			if (dispMic[i] > pMic)
@@ -83,6 +93,7 @@ public final class SignalState
 			sSolo += dispSolo[i];
 			if (dispSolo[i] > soloPeak) soloPeak = dispSolo[i];
 		}
+
 		return new Stats(centers[pIdx], pMic, sMic / n, sSolo / n, soloPeak, null);
 	}
 }

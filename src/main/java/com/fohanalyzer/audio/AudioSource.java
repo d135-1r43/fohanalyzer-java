@@ -74,8 +74,15 @@ public final class AudioSource
 			setChannel(channelIndex);
 			return channelCount;
 		}
+
 		disconnect();
 		error = null;
+
+		if (device == null)
+		{
+			throw new IllegalArgumentException("device");
+		}
+
 		try
 		{
 			Mixer mixer = AudioSystem.getMixer(device.mixerInfo());

@@ -38,7 +38,12 @@ public class MainApp extends Application
 	private final AppState state = new AppState();
 	private final Settings settings = new Settings();
 
-	private Label peakVal, micVal, soloVal, splVal, clockLabel;
+	private Label peakVal;
+	private Label micVal;
+	private Label soloVal;
+	private Label splVal;
+	private Label clockLabel;
+
 	private HBox splChip;
 
 	@Override

@@ -23,8 +23,13 @@ import java.util.List;
  */
 public final class Draw
 {
-	public static final double DB_TOP = -6, DB_BOT = -90;
-	public static final double PAD_L = 50, PAD_R = 16, PAD_T = 18, PAD_B = 50;
+	public static final double DB_TOP = -6;
+	public static final double DB_BOT = -90;
+
+	public static final double PAD_L = 50;
+	public static final double PAD_R = 16;
+	public static final double PAD_T = 18;
+	public static final double PAD_B = 50;
 
 	private static final double[] FREQ_MAJ_F = { 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000 };
 	private static final String[] FREQ_MAJ_L = { "20", "50", "100", "200", "500", "1k", "2k", "5k", "10k", "20k" };
@@ -195,21 +200,26 @@ public final class Draw
 	public static void drawTransferCurve(GraphicsContext g, double[] centers, float[] dispMic,
 		float[] dispSolo, double width, double plotW, double plotH)
 	{
-		double tfRange = 24, midY = PAD_T + plotH / 2, half = (plotH / 2) * 0.8;
+		double tfRange = 24;
+		double midY = PAD_T + plotH / 2;
+		double half = (plotH / 2) * 0.8;
+
 		g.setStroke(Color.rgb(183, 148, 246, 0.28));
 		g.setLineDashes(6, 6);
 		g.strokeLine(PAD_L, midY, width - PAD_R, midY);
 		g.setLineDashes(null);
 		g.beginPath();
+
 		for (int i = 0; i < centers.length; i++)
 		{
 			double d = dispMic[i] - dispSolo[i];
 			double x = fX(centers[i], plotW);
-			double y = midY - Math.max(-tfRange, Math.min(tfRange, d)) / tfRange * half;
+			double y = midY - Math.clamp(d, -tfRange, tfRange) / tfRange * half;
 			if (i == 0) g.moveTo(x, y);
 			else
 				g.lineTo(x, y);
 		}
+
 		g.setLineWidth(2.5);
 		g.setStroke(Color.web("#b794f6"));
 		g.setEffect(new DropShadow(7, Color.web("#b794f6")));
@@ -219,18 +229,24 @@ public final class Draw
 
 	public static void drawTransferLabels(GraphicsContext g, double width, double plotW, double plotH)
 	{
-		double tfRange = 24, midY = PAD_T + plotH / 2, half = (plotH / 2) * 0.8;
+		double tfRange = 24;
+		double midY = PAD_T + plotH / 2;
+		double half = (plotH / 2) * 0.8;
+
 		g.setFont(Fonts.mono(10));
 		g.setTextAlign(TextAlignment.RIGHT);
 		g.setTextBaseline(VPos.CENTER);
+
 		int[] ds = { 24, 12, 0, -12, -24 };
 		String[] ls = { "+24", "+12", "0", "−12", "−24" };
+
 		for (int i = 0; i < ds.length; i++)
 		{
 			double y = midY - ds[i] / tfRange * half;
 			g.setFill(Color.rgb(183, 148, 246, 0.7));
 			g.fillText(ls[i], width - PAD_R - 6, y);
 		}
+
 		g.setTextAlign(TextAlignment.LEFT);
 		g.setFill(Color.rgb(183, 148, 246, 0.9));
 		g.setFont(Fonts.mono(FontWeight.SEMI_BOLD, 9));
@@ -327,10 +343,12 @@ public final class Draw
 		float[] dispMic, float[] dispSolo, double width, double plotW,
 		double plotH, boolean micOn, boolean soloOn)
 	{
-		double mx = mouse.x(), my = mouse.y();
+		double mx = mouse.x();
+		double my = mouse.y();
+
 		if (mx <= PAD_L || mx >= width - PAD_R || my <= PAD_T || my >= PAD_T + plotH) return;
 		int n = centers.length;
-		double f = Engine.normFreq(Math.max(0, Math.min(1, (mx - PAD_L) / plotW)));
+		double f = Engine.normFreq(Math.clamp((mx - PAD_L) / plotW, 0, 1));
 		int idx = 0;
 		double best = 1e9;
 		for (int i = 0; i < n; i++)

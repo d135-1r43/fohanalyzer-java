@@ -97,7 +97,7 @@ public final class AudioDsp
 				if (specDb[b] > peak) peak = specDb[b];
 			}
 			double v = peak > -200 ? peak : -95;
-			out[i] = (float)Math.max(-95, Math.min(-2, v));
+			out[i] = (float)Math.clamp(v, -95, -2);
 		}
 		return out;
 	}

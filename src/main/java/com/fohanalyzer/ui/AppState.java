@@ -94,10 +94,13 @@ public final class AppState
 
 	public String signalStatus()
 	{
-		boolean m = isMicLive(), s = isSoloLive();
+		boolean m = isMicLive();
+		boolean s = isSoloLive();
+
 		if (m && s) return "live signal";
 		if (m) return "mic live · solo simulated";
 		if (s) return "mic simulated · solo live";
+
 		return "simulated signal";
 	}
 }
