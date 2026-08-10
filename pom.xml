@@ -34,7 +34,7 @@
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>26.0.2</javafx.version>
-    <junit.version>6.1.2</junit.version>
+    <junit.version>6.1.3</junit.version>
     <tarsosdsp.version>2.5</tarsosdsp.version>
     <slf4j.version>2.0.18</slf4j.version>
     <formatter.plugin.version>2.29.0</formatter.plugin.version>
