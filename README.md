@@ -189,11 +189,15 @@ preset selected instead of pointing at a line that cannot be opened. A channel i
 against an 18-in interface is clamped when it reopens on a 2-in one. *Reset saved settings*
 at the foot of the rail clears everything back to defaults.
 
-The preferences window remembers its own size and position, restored onto the stage rather
-than the scene — the saved height is the outer window and includes the title bar, so
-feeding it back into the scene would add that bar again on every launch. A position that no
-longer lands on any display is ignored, which is the normal case for a laptop carried
-between rigs.
+The preferences window is not resizable: dragging an edge in used to hide controls with
+nothing to say they were there. Its width is fixed and its height is measured from the
+content, re-measured whenever that content changes — picking a multi-channel live input
+adds a channel stepper and a mono/stereo row, and the window grows to match.
+
+It remembers its position, restored onto the stage rather than the scene — what was saved
+is the outer window and includes the title bar, so feeding it back into the scene would add
+that bar again on every launch. A position that no longer lands on any display is ignored,
+which is the normal case for a laptop carried between rigs.
 
 ### Ring-out assist
 

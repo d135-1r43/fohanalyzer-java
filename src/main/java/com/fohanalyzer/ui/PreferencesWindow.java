@@ -1,6 +1,7 @@
 package com.fohanalyzer.ui;
 
 import com.fohanalyzer.ui.controls.ChannelSelect;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -31,12 +32,17 @@ import java.util.Locale;
  */
 public final class PreferencesWindow
 {
-	private static final double DEFAULT_W = 420;
-	private static final double DEFAULT_H = 520;
+	/**
+	 * The window is not resizable: a dragged-in edge hides controls with no
+	 * clue that they are there. So this is the one width the layout is drawn
+	 * for, and the height is always whatever the content needs at that width.
+	 */
+	private static final double WIDTH = 420;
 
 	private final AppState state;
 	private final Settings settings;
 	private Stage stage;
+	private VBox body;
 
 	public PreferencesWindow(AppState state, Settings settings)
 	{
@@ -54,7 +60,10 @@ public final class PreferencesWindow
 			return;
 		}
 
-		Scene scene = new Scene(buildRoot(), DEFAULT_W, DEFAULT_H, Color.web("#070a0f"));
+		// No size on the scene — sizeToScene() below measures the content
+		// instead. A number written down here would be wrong the moment a hint
+		// wraps onto another line or the theme changes a padding.
+		Scene scene = new Scene(buildRoot(), Color.web("#070a0f"));
 		scene.getStylesheets().add(
 			MainApp.class.getResource("/com/fohanalyzer/theme.css").toExternalForm());
 
@@ -62,24 +71,31 @@ public final class PreferencesWindow
 		stage.setTitle("FOHanalyzer · Preferences");
 		stage.initOwner(owner);
 		stage.initModality(Modality.NONE);
+		stage.setResizable(false);
 		stage.setScene(scene);
-		stage.setMinWidth(DEFAULT_W);
-		stage.setMinHeight(360);
+		stage.sizeToScene();
 
-		// Restore onto the stage, not the scene: what was saved is the outer
-		// window, and a scene is the inner area. Feeding one into the other
-		// adds the title bar again every launch, and the window creeps taller.
+		// Only the position is restored now that the size is not the user's to
+		// choose. Restore onto the stage, not the scene: what was saved is the
+		// outer window, and a scene is the inner area. Feeding one into the
+		// other adds the title bar again every launch, and the window creeps
+		// taller.
 		Settings.WindowBounds saved = settings.prefsWindow();
-		if (saved != null)
+		if (saved != null && onAScreen(saved))
 		{
-			stage.setWidth(saved.w());
-			stage.setHeight(saved.h());
-			if (onAScreen(saved))
-			{
-				stage.setX(saved.x());
-				stage.setY(saved.y());
-			}
+			stage.setX(saved.x());
+			stage.setY(saved.y());
 		}
+		stage.show();
+
+		// The channel stepper and the mono/stereo row only exist for a
+		// multi-channel live input, so the content gets taller once a source is
+		// picked. Nothing can be dragged bigger any more, so the window has to
+		// follow it. Deferred, to keep the resize out of the layout pass that
+		// asked for it.
+		body.heightProperty().addListener((o, a, b) -> Platform.runLater(() -> {
+			if (stage != null) stage.sizeToScene();
+		}));
 
 		// Written as they change and flushed when the window goes away — a drag
 		// fires these continuously, and flushing each frame would be silly.
@@ -87,14 +103,11 @@ public final class PreferencesWindow
 			stage.getX(), stage.getY(), stage.getWidth(), stage.getHeight());
 		stage.xProperty().addListener((o, a, b) -> remember.run());
 		stage.yProperty().addListener((o, a, b) -> remember.run());
-		stage.widthProperty().addListener((o, a, b) -> remember.run());
-		stage.heightProperty().addListener((o, a, b) -> remember.run());
 		stage.setOnHidden(e -> {
 			remember.run();
 			settings.flush();
 			stage = null;
 		});
-		stage.show();
 	}
 
 	/**
@@ -114,9 +127,8 @@ public final class PreferencesWindow
 	 */
 	VBox buildRoot()
 	{
-		VBox body = new VBox(18, sourcesSection(), splSection());
+		body = new VBox(18, sourcesSection(), splSection());
 		body.getStyleClass().add("prefs-body");
-		VBox.setVgrow(body, Priority.ALWAYS);
 
 		Button close = new Button("Done");
 		close.getStyleClass().addAll("btn", "mini-btn");
@@ -129,6 +141,12 @@ public final class PreferencesWindow
 
 		VBox root = new VBox(body, foot);
 		root.getStyleClass().add("prefs-root");
+		// Width is the fixed one of the two: a wrapped hint only has a height
+		// once it knows what to wrap into, so pinning the width is what makes
+		// the height measurable at all.
+		root.setMinWidth(WIDTH);
+		root.setPrefWidth(WIDTH);
+		root.setMaxWidth(WIDTH);
 		return root;
 	}
 
